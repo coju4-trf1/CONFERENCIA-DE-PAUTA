@@ -1,0 +1,1893 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conferência de Pauta</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style/dist/xlsx.bundle.js"></script>
+<script>if(typeof XLSX==='undefined')document.write('<script src="https://unpkg.com/xlsx-js-style@1.6.0/dist/xlsx.bundle.js"><\/script>');</script>
+<script>if(typeof XLSX==='undefined')document.write('<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"><\/script>');</script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=DM+Sans:wght@400;500;600;700&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{--bg:#0f1117;--surface:#1a1d27;--surface2:#242836;--border:#2e3345;--text:#e2e4ed;--text-dim:#8b8fa3;--accent:#4e8cff;--accent-dim:#4e8cff22;--green:#34d399;--green-dim:#34d39922;--red:#f87171;--orange:#fb923c;--yellow:#facc15}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:0}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:9999}
+  .modal-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2.5rem 2rem;width:380px;text-align:center}
+  .modal-icon{font-size:2.2rem;margin-bottom:.8rem}
+  .modal-title{font-size:1.3rem;font-weight:700;margin-bottom:.3rem}
+  .modal-sub{font-size:.85rem;color:var(--text-dim);margin-bottom:1.5rem}
+  .modal-input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:.7rem 1rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.9rem;outline:none;text-align:center}
+  .modal-input:focus{border-color:var(--accent)}
+  .modal-input::placeholder{color:#555}
+  .modal-error{color:var(--red);font-size:.78rem;min-height:1.2rem;margin-top:.5rem}
+  .modal-btn{margin-top:1rem;width:100%;padding:.7rem}
+  .topbar{display:flex;align-items:center;gap:1rem;padding:1rem 1.5rem;border-bottom:1px solid var(--border);background:var(--surface);flex-wrap:wrap;position:relative}
+  .topbar-icon{width:38px;height:38px;background:var(--accent-dim);border:1px solid var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+  .topbar h1{font-size:1.2rem;font-weight:700;letter-spacing:-.02em}
+  .topbar .user-tag{font-size:.78rem;color:var(--accent);margin-left:auto;font-family:'JetBrains Mono',monospace}
+  .restore-bar{display:flex;align-items:center;gap:.8rem;padding:.6rem 1.5rem;background:var(--surface2);border-bottom:1px solid var(--border)}
+  .restore-status{font-size:.75rem;color:var(--green);font-family:'JetBrains Mono',monospace}
+  .steps-area{padding:.8rem 1.5rem;border-bottom:1px solid var(--border);background:var(--surface)}
+  .step{display:flex;align-items:center;gap:.7rem;padding:.5rem 0;flex-wrap:wrap}
+  .step-num{width:24px;height:24px;background:var(--accent);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0}
+  .step-text{font-size:.82rem;color:var(--text)}
+  .step-link{font-size:.8rem;color:var(--accent);text-decoration:none;font-weight:600;border:1px solid var(--accent);border-radius:6px;padding:.3rem .7rem;transition:all .15s}
+  .step-link:hover{background:var(--accent);color:#fff}
+  .acervo-name{font-size:.85rem;font-weight:600;color:var(--green);font-family:'JetBrains Mono',monospace}
+  .acervo-file{font-size:.72rem;color:var(--text-dim);font-family:'JetBrains Mono',monospace}
+  .dropzone-mini{border:1px dashed var(--border);border-radius:8px;padding:.4rem .8rem;cursor:pointer;font-size:.78rem;color:var(--text-dim);transition:all .2s}
+  .dropzone-mini:hover{border-color:var(--accent);color:var(--accent)}
+  .dropzone-mini.loaded{border-color:var(--green);color:var(--green);border-style:solid}
+  .dropzone-mini input{display:none}
+  .tabs-bar{display:flex;border-bottom:1px solid var(--border);background:var(--surface)}
+  .tab-btn{padding:.7rem 1.5rem;font-size:.82rem;font-weight:600;border:none;background:none;color:var(--text-dim);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;font-family:'DM Sans',sans-serif}
+  .tab-btn:hover{color:var(--text);background:var(--surface2)}
+  .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--surface2)}
+  .tab-btn .tab-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-left:6px;vertical-align:middle}
+  .tab-btn .tab-dot.has-data{background:var(--green)}
+  .sala-panel{display:none;padding:1.2rem 1.5rem}
+  .sala-panel.active{display:block}
+  .sala-panel-top{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:0}
+  @media(max-width:900px){.sala-panel-top{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.2rem;margin-bottom:1rem}
+  .card-label{font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-dim);margin-bottom:.6rem;display:flex;align-items:center;gap:.5rem}
+  .card-label .badge{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 8px;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--accent)}
+  input[type="text"].field{width:auto;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:.55rem .8rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.85rem;outline:none}
+  input[type="text"].field:focus{border-color:var(--accent)}
+  input[type="text"].field::placeholder{color:#555}
+  input[type="text"].field:read-only{opacity:.5;cursor:not-allowed}
+  textarea{width:100%;height:140px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:.7rem;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.8rem;line-height:1.6;resize:vertical;outline:none}
+  textarea:focus{border-color:var(--accent)}
+  textarea::placeholder{color:#555}
+  button{font-family:'DM Sans',sans-serif;font-weight:600;font-size:.82rem;border:none;border-radius:8px;padding:.55rem 1.2rem;cursor:pointer;transition:all .15s}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover{filter:brightness(1.15)}
+  .btn-primary:disabled,.btn-secondary:disabled{opacity:.4;cursor:not-allowed;filter:none}
+  .btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+  .btn-secondary:hover{border-color:var(--text-dim)}
+  .btn-sm{padding:.35rem .7rem;font-size:.75rem}
+  .option-check{display:flex;align-items:center;gap:.5rem;font-size:.8rem;color:var(--text-dim);cursor:pointer}
+  .option-check input[type="checkbox"]{accent-color:var(--accent);width:15px;height:15px}
+  .dup-badge{font-size:.75rem;color:var(--orange);font-family:'JetBrains Mono',monospace}
+  .actions-bar{display:flex;gap:.7rem;align-items:center;flex-wrap:wrap;margin-bottom:.8rem}
+  .stats{font-size:.78rem;color:var(--text-dim);font-family:'JetBrains Mono',monospace;margin-left:auto}
+  .stats span{color:var(--green);font-weight:600}
+  .stats .miss{color:var(--orange)}
+  .not-found-section{margin-bottom:.8rem;display:none}
+  .nf-toggle{font-size:.78rem;color:var(--orange);cursor:pointer;background:none;border:1px solid var(--orange);border-radius:6px;padding:.35rem .7rem;font-family:'DM Sans',sans-serif}
+  .nf-copy{color:var(--accent);border-color:var(--accent);margin-left:.4rem}
+  .nf-list{margin-top:.5rem;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--text-dim);line-height:1.8;display:none;max-height:180px;overflow-y:auto;background:var(--bg);border-radius:8px;padding:.7rem}
+  .date-row{display:flex;align-items:center;gap:.4rem;flex-wrap:wrap}
+  .date-row .field{width:120px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:.85rem;letter-spacing:.05em}
+  .date-sep{color:var(--text-dim);font-weight:600;padding:0 .2rem;font-size:.85rem}
+  .date-hint{font-size:.65rem;color:var(--text-dim);margin-left:.5rem}
+  .color-toolbar{display:none;gap:.5rem;align-items:center;flex-wrap:wrap;padding:.7rem .8rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:.8rem}
+  .color-toolbar.show{display:flex}
+  .color-toolbar label{font-size:.75rem;color:var(--text-dim);font-weight:600;margin-right:.2rem}
+  .color-btn{width:26px;height:26px;border-radius:6px;border:2px solid transparent;cursor:pointer;transition:all .15s}
+  .color-btn:hover{transform:scale(1.15)}
+  .color-btn.locked{opacity:.35;cursor:not-allowed;pointer-events:none}
+  .color-btn.locked:hover{transform:none}
+  .color-btn[data-color="green"]{background:#00B050}
+  .color-btn[data-color="yellow"]{background:#FFFF00}
+  .color-btn[data-color="orange"]{background:#003366}
+  .color-btn[data-color="red"]{background:#FF0000}
+  .color-btn[data-color="purple"]{background:#7B2D8E}
+  .color-btn[data-color="teal"]{background:#00838F}
+  .color-btn[data-color="pink"]{background:#E91E63}
+  .color-btn[data-color="brown"]{background:#6B3A2A}
+  .color-btn[data-color="migrado"]{background:#444}
+  .color-btn[data-color="none"]{background:var(--surface2);position:relative}
+  .color-btn[data-color="none"]::after{content:'✕';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--text-dim);font-size:.65rem}
+  .toolbar-sep{width:1px;height:22px;background:var(--border);margin:0 .2rem}
+  .filter-select{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:.3rem .5rem;color:var(--text);font-size:.75rem;outline:none;cursor:pointer}
+  .sel-count{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--accent)}
+  .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:none}
+  .table-scroll{overflow:auto;max-height:55vh}
+  table{width:100%;border-collapse:collapse;font-size:.76rem}
+  thead{position:sticky;top:0;z-index:2}
+  th{background:var(--surface2);color:var(--text-dim);font-weight:600;text-transform:uppercase;font-size:.66rem;letter-spacing:.06em;padding:.55rem .6rem;text-align:left;white-space:nowrap;border-bottom:1px solid var(--border);position:relative}
+  td{padding:.4rem .6rem;border-bottom:1px solid var(--border);white-space:nowrap;max-width:220px;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+  th.cb-col,td.cb-col{width:52px;text-align:center}
+  input.row-cb{accent-color:var(--accent);width:14px;height:14px;cursor:pointer}
+  tr.row-green td{background:#00B05018}
+  tr.row-yellow td{background:#FFFF0018}
+  tr.row-orange td{background:#00336618}
+  tr.row-red td{background:#FF000018}
+  tr.row-purple td{background:#7B2D8E18}
+  tr.row-teal td{background:#00838F18}
+  tr.row-pink td{background:#E91E6318}
+  tr.row-brown td{background:#6B3A2A20}
+  tr.row-migrado td{background:#44444420}
+  tr.row-green td.ci{border-left:4px solid #00B050}
+  tr.row-yellow td.ci{border-left:4px solid #FFFF00}
+  tr.row-orange td.ci{border-left:4px solid #003366}
+  tr.row-red td.ci{border-left:4px solid #FF0000}
+  tr.row-purple td.ci{border-left:4px solid #7B2D8E}
+  tr.row-teal td.ci{border-left:4px solid #00838F}
+  tr.row-pink td.ci{border-left:4px solid #E91E63}
+  tr.row-brown td.ci{border-left:4px solid #6B3A2A}
+  tr.row-migrado td.ci{border-left:4px solid #444}
+  tr:hover td{background:var(--accent-dim)}
+  .cnj-col{font-family:'JetBrains Mono',monospace;font-size:.74rem}
+  .cnj-link{color:var(--accent);text-decoration:none;cursor:pointer}
+  .cnj-link:hover{text-decoration:underline;filter:brightness(1.2)}
+  .cnj-link.copied{color:var(--green)}
+  .col-filter-btn{display:inline-block;cursor:pointer;margin-left:4px;opacity:.7;font-size:.8rem;vertical-align:middle;transition:all .15s;color:var(--accent);background:var(--accent-dim);border-radius:3px;padding:0 3px;line-height:1.2}
+  .col-filter-btn:hover,.col-filter-btn.active{opacity:1;color:#fff;background:var(--accent)}
+  .col-filter-drop{position:fixed;z-index:100;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.6rem;width:240px;max-height:320px;display:none;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+  .col-filter-drop.show{display:block}
+  .col-filter-drop .cfd-search{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:.35rem .5rem;color:var(--text);font-size:.75rem;outline:none;margin-bottom:.4rem;font-family:'DM Sans',sans-serif}
+  .col-filter-drop .cfd-search:focus{border-color:var(--accent)}
+  .col-filter-drop .cfd-list{max-height:200px;overflow-y:auto;margin-bottom:.4rem}
+  .col-filter-drop .cfd-item{display:flex;align-items:center;gap:.4rem;padding:.2rem .3rem;font-size:.72rem;color:var(--text);cursor:pointer;border-radius:4px}
+  .col-filter-drop .cfd-item:hover{background:var(--surface2)}
+  .col-filter-drop .cfd-item input{accent-color:var(--accent);width:13px;height:13px;cursor:pointer}
+  .col-filter-drop .cfd-item label{cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+  .col-filter-drop .cfd-actions{display:flex;gap:.4rem;justify-content:flex-end}
+  .col-filter-drop .cfd-actions button{font-size:.72rem;padding:.25rem .6rem}
+  .cfd-selall{font-size:.72rem;color:var(--accent);cursor:pointer;margin-bottom:.3rem;display:flex;align-items:center;gap:.4rem}
+  .cfd-selall input{accent-color:var(--accent);width:13px;height:13px;cursor:pointer}
+  .export-bar{padding:1rem 1.5rem;border-top:1px solid var(--border);background:var(--surface);display:flex;gap:.8rem;align-items:center;flex-wrap:wrap;position:sticky;bottom:0}
+  .save-indicator{position:fixed;bottom:1rem;right:1.5rem;font-size:.75rem;color:#fff;background:#34d399;font-family:'JetBrains Mono',monospace;padding:.4rem .8rem;border-radius:8px;opacity:0;transition:opacity .3s;z-index:50;pointer-events:none}
+  .save-indicator.show{opacity:1}
+  /* Confirm modal */
+  .confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;z-index:10000}
+  .confirm-overlay.show{display:flex}
+  .confirm-box{background:var(--surface);border:1px solid var(--red);border-radius:16px;padding:2rem 1.8rem;width:360px;text-align:center}
+  .confirm-box .modal-icon{color:var(--red)}
+  .confirm-box p{font-size:.85rem;color:var(--text-dim);margin:.5rem 0 1rem}
+  .confirm-btns{display:flex;gap:.8rem}
+  .confirm-btns button{flex:1;padding:.6rem}
+  .btn-confirm-danger{background:var(--red);color:#fff;font-weight:700}
+  .btn-confirm-danger:hover{filter:brightness(1.15)}
+  .btn-confirm-cancel{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+  .btn-danger-sm{background:var(--surface2);color:var(--red);border:1px solid var(--red);font-size:.75rem;padding:.35rem .7rem}
+  .btn-danger-sm:hover{background:#ff000018}
+  /* Settings */
+  .btn-gear{background:none;border:1px solid var(--border);border-radius:8px;padding:.35rem .6rem;font-size:1rem;cursor:pointer;color:var(--text-dim);transition:all .15s}
+  .btn-gear:hover{border-color:var(--accent);color:var(--accent)}
+  .settings-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;z-index:9999}
+  .settings-overlay.show{display:flex}
+  .settings-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.5rem;width:420px;max-height:80vh;overflow-y:auto}
+  .settings-box h3{font-size:1rem;font-weight:700;margin-bottom:.8rem;display:flex;align-items:center;gap:.5rem}
+  .settings-section{margin-bottom:1rem}
+  .settings-section label{font-size:.78rem;color:var(--text-dim);font-weight:600;display:block;margin-bottom:.4rem}
+  .settings-list{display:flex;flex-direction:column;gap:.3rem;margin-bottom:.5rem}
+  .settings-item{display:flex;align-items:center;gap:.4rem;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:.35rem .6rem;font-size:.8rem}
+  .settings-item span{flex:1}
+  .settings-item .btn-rm{background:none;border:none;color:var(--red);cursor:pointer;font-size:.9rem;padding:0 .2rem}
+  .settings-add-row{display:flex;gap:.4rem}
+  .settings-add-row input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:.35rem .6rem;color:var(--text);font-size:.8rem;outline:none;font-family:'DM Sans',sans-serif}
+  .settings-add-row input:focus{border-color:var(--accent)}
+  /* Impedimento checkboxes */
+  .imped-area{padding:.4rem 0}
+  .imped-checks{display:flex;flex-wrap:wrap;gap:.4rem .8rem}
+  .imped-check{font-size:.78rem;color:var(--text-dim);cursor:pointer;display:flex;align-items:center;gap:.3rem}
+  .imped-check input{accent-color:#6B3A2A;width:14px;height:14px;cursor:pointer}
+  /* Modal select turma */
+  .modal-select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:.7rem 1rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.9rem;outline:none;margin-top:.7rem;cursor:pointer}
+  .modal-select:focus{border-color:var(--accent)}
+  .modal-select option{background:var(--surface)}
+  /* Topbar turma badge */
+  .turma-badge{font-size:.75rem;font-weight:700;color:#000;background:#ff8c00;border-radius:8px;padding:.25rem .7rem;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .15s;border:1px solid #ffaa33;white-space:nowrap}
+  .turma-badge:hover{background:#ffaa33}
+  .turma-badge:hover{filter:brightness(1.15)}
+  /* Session manager */
+  .session-area{padding:.7rem 1.5rem;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:1rem;flex-wrap:wrap}
+  .session-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-dim);white-space:nowrap;padding-top:.45rem}
+  .session-chips{display:flex;flex-wrap:wrap;gap:.4rem;flex:1;align-items:center}
+  .session-chip{font-size:.78rem;font-family:'JetBrains Mono',monospace;background:#2a1800;border:1px solid #cc6600;border-radius:20px;padding:.3rem .8rem;cursor:pointer;color:#ff8c00;transition:all .15s;white-space:nowrap;font-weight:600}
+  .session-chip:hover{background:#3a2200;border-color:#ff8c00;color:#ffaa33}
+  .session-chip.active{background:#ff8c00;border-color:#ffaa33;color:#000;font-weight:700}
+  .session-add{display:flex;align-items:center;gap:.4rem}
+  .session-add input{width:140px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:.35rem .6rem;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.8rem;outline:none;letter-spacing:.04em}
+  .session-add input:focus{border-color:var(--accent)}
+  .session-add input::placeholder{color:#555;font-size:.72rem}
+  .session-hint{font-size:.65rem;color:var(--text-dim);margin-left:.2rem}
+  /* Modal genérico reutilizável */
+  .generic-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;z-index:10000}
+  .generic-overlay.show{display:flex}
+  /* Modal de ajuda */
+  .help-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.8rem;width:520px;max-height:80vh;overflow-y:auto}
+  .help-box h3{font-size:1.1rem;font-weight:700;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+  .help-step{display:flex;gap:.8rem;margin-bottom:.9rem;align-items:flex-start}
+  .help-num{width:24px;height:24px;min-width:24px;background:var(--accent);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;margin-top:.1rem}
+  .help-text{font-size:.82rem;color:var(--text-dim);line-height:1.5}
+  .help-text b{color:var(--text)}
+  .help-divider{border:none;border-top:1px solid var(--border);margin:.8rem 0}
+  .help-legend{display:flex;flex-wrap:wrap;gap:.4rem .8rem;margin-top:.3rem}
+  .help-color{display:flex;align-items:center;gap:.4rem;font-size:.75rem;color:var(--text-dim)}
+  .help-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+  /* Botão de ajuda */
+  .btn-help{background:none;border:1px solid var(--border);border-radius:50%;width:28px;height:28px;font-size:.85rem;cursor:pointer;color:var(--text-dim);transition:all .15s;display:flex;align-items:center;justify-content:center;font-weight:700}
+  .btn-help:hover{border-color:var(--accent);color:var(--accent)}
+  /* Modal troca de sessão */
+  .switch-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2rem 1.8rem;width:380px;text-align:center}
+  .switch-box p{font-size:.85rem;color:var(--text-dim);margin:.5rem 0 1.2rem}
+  .switch-btns{display:flex;gap:.8rem;flex-direction:column}
+  .btn-switch-save{background:var(--accent);color:#fff;font-weight:700;padding:.65rem}
+  .btn-switch-save:hover{filter:brightness(1.15)}
+  .btn-switch-nosave{background:var(--surface2);color:var(--red);border:1px solid var(--red);padding:.65rem}
+  .btn-switch-nosave:hover{background:#ff000018}
+  .btn-switch-cancel{background:var(--surface2);color:var(--text-dim);border:1px solid var(--border);padding:.55rem;font-size:.78rem}
+</style>
+</head>
+<body>
+<div id="nameModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-icon">⚖</div>
+    <h2 class="modal-title">Conferência de Pauta</h2>
+    <p class="modal-sub">Identifique-se para continuar</p>
+    <input type="text" id="nameInput" class="modal-input" placeholder="Digite seu nome completo" autocomplete="off">
+    <select id="turmaSelect" class="modal-select">
+      <option value="">— Selecione a Turma —</option>
+      <option value="1">1ª TURMA</option>
+      <option value="2">2ª TURMA</option>
+      <option value="3">3ª TURMA</option>
+      <option value="4">4ª TURMA</option>
+      <option value="5">5ª TURMA</option>
+      <option value="6">6ª TURMA</option>
+      <option value="7">7ª TURMA</option>
+      <option value="8">8ª TURMA</option>
+      <option value="9">9ª TURMA</option>
+      <option value="10">10ª TURMA</option>
+      <option value="11">11ª TURMA</option>
+      <option value="12">12ª TURMA</option>
+      <option value="13">13ª TURMA</option>
+    </select>
+    <div id="nameError" class="modal-error"></div>
+    <button id="nameSubmit" class="btn-primary modal-btn">Entrar</button>
+  </div>
+</div>
+<div id="appContent" style="display:none">
+<div class="topbar" style="justify-content:center;text-align:center;flex-direction:column;gap:.3rem;padding:1rem 1.5rem">
+  <div style="display:flex;align-items:center;gap:1rem;width:100%;justify-content:center;position:relative">
+    <div class="topbar-icon">⚖</div>
+    <div style="display:flex;align-items:center;gap:.7rem">
+      <h1>Conferência de Pauta</h1>
+      <span id="teamsAlert" style="display:none;font-size:.65rem;font-weight:700;color:#fff;background:#c0392b;border-radius:6px;padding:.2rem .5rem;letter-spacing:.03em;white-space:nowrap"></span>
+    </div>
+    <div style="position:absolute;right:0;display:flex;align-items:center;gap:.5rem">
+      <button class="btn-help" id="btnHelp" title="Como usar esta ferramenta">?</button>
+      <span class="turma-badge" id="turmaBadge" title="Clique para trocar de turma"></span>
+      <button class="btn-gear" id="btnTestTelemetria" title="Testar envio de telemetria" style="font-size:.7rem;padding:.3rem .5rem;color:var(--text-dim)">T</button>
+      <button class="btn-gear" id="btnTestWebhook" title="Testar envio ao canal Teams" style="font-size:.7rem;padding:.3rem .5rem;color:var(--text-dim)">E</button>
+      <button class="btn-gear" id="btnSettings" title="Configurações">⚙</button>
+    </div>
+  </div>
+  <div id="sessionDateDisplay" style="display:none;flex-direction:column;align-items:center;gap:.1rem">
+    <div id="sessionTurmaDisplay" style="font-size:.78rem;font-weight:700;color:var(--text-dim);font-family:'JetBrains Mono',monospace;letter-spacing:.08em;text-transform:uppercase"></div>
+    <div id="sessionDateText" style="font-size:1.35rem;font-weight:700;color:var(--accent);font-family:'JetBrains Mono',monospace;letter-spacing:.04em"></div>
+  </div>
+</div>
+<!-- Settings modal -->
+<div class="settings-overlay" id="settingsModal">
+  <div class="settings-box">
+    <h3>⚙ Configurações</h3>
+    <div class="settings-section">
+      <label>Magistrados para verificação de Impedimento/Suspeição</label>
+      <div class="settings-list" id="impedList"></div>
+      <div class="settings-add-row">
+        <input type="text" id="impedNewName" placeholder="Nome do magistrado (ex: MARIA DA SILVA)">
+        <button class="btn-primary btn-sm" id="impedAddBtn">Adicionar</button>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:1rem">
+      <button class="btn-primary" id="settingsClose">Fechar</button>
+    </div>
+  </div>
+</div>
+<div class="restore-bar" id="restoreBar">
+  <span class="user-tag" id="userName" style="font-size:.78rem;color:var(--accent);font-family:'JetBrains Mono',monospace"></span>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:.8rem">
+    <button class="btn-secondary btn-sm" id="btnBackupImport">📂 Restaurar análise anterior (importar backup)</button>
+    <input type="file" id="backupFileInput" accept=".json" style="display:none">
+  </div>
+  <span class="restore-status" id="restoreStatus"></span>
+</div>
+<div class="steps-area">
+  <div class="step">
+    <span class="step-num">1</span>
+    <span class="step-text">Baixar o excel do e-siest, clique no link ao lado</span>
+    <a class="step-link" href="https://app.powerbi.com/groups/me/apps/07de39b4-ba7d-4113-bb28-a544bdf2424d/reports/92d4edb0-bffd-4002-a279-426dd5b782af/6be50531af611556b83d?ctid=963819f6-e1a3-491c-a1cc-5096f914cf4b&experience=power-bi" target="_blank">Abrir e-SIEST ↗</a>
+  </div>
+  <div class="step">
+    <span class="step-num">2</span>
+    <span class="step-text">Carregar a planilha de cada relator na aba correspondente (Relator 1, Relator 2...). Cada aba é independente — troque a planilha sem perder a análise das outras.</span>
+  </div>
+  <div class="step">
+    <span class="step-num">3</span>
+    <span class="step-text">Selecione ou crie uma <b>data de sessão</b> abaixo, depois cole a lista de processos na sala correspondente</span>
+  </div>
+</div>
+
+<!-- GERENCIADOR DE SESSÕES POR DATA -->
+<div class="session-area" id="sessionArea">
+  <span class="session-label">📅 Data da sessão</span>
+  <div style="flex:1;display:flex;flex-direction:column;gap:.35rem">
+    <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
+      <div class="session-chips" id="sessionChips"></div>
+    </div>
+    <div id="obsEditDate" style="font-size:.62rem;color:var(--text-dim);opacity:.6;font-style:italic;display:none">Obs: para editar a data da sessão clique com o botão direito do mouse</div>
+  </div>
+  <div class="session-add">
+    <input type="text" id="sessionDateInput" placeholder="dd/mm/aaaaaa ou período" maxlength="23">
+    <button class="btn-primary btn-sm" id="btnAddSession">+ Adicionar</button>
+    <span class="session-hint" style="color:var(--green);font-size:.72rem;font-weight:500">Após a data de início digite "a" para período de sessão virtual</span>
+  </div>
+</div>
+
+<div class="tabs-bar" id="tabsBar">
+  <button class="tab-btn active" data-sala="0">Relator 1 <span class="tab-dot" data-sala="0"></span></button>
+  <button class="tab-btn" data-sala="1">Relator 2 <span class="tab-dot" data-sala="1"></span></button>
+  <button class="tab-btn" data-sala="2">Relator 3 <span class="tab-dot" data-sala="2"></span></button>
+  <button class="tab-btn" data-sala="3">Relator 4 <span class="tab-dot" data-sala="3"></span></button>
+</div>
+<div id="salasContainer"></div>
+<div class="col-filter-drop" id="colFilterDrop">
+  <input type="text" class="cfd-search" id="cfdSearch" placeholder="Buscar...">
+  <label class="cfd-selall"><input type="checkbox" id="cfdSelAll" checked>Selecionar tudo</label>
+  <div class="cfd-list" id="cfdList"></div>
+  <div class="cfd-actions">
+    <button class="btn-secondary btn-sm" id="cfdClear">Limpar filtro</button>
+    <button class="btn-primary btn-sm" id="cfdApply">Aplicar</button>
+  </div>
+</div>
+<div class="export-bar" style="flex-direction:column;align-items:stretch;gap:.6rem">
+  <div id="confirmacaoAnalise" style="display:none;background:#00B05018;border:1px solid #00B050;border-radius:8px;padding:.5rem 1rem;font-size:.82rem;color:#00B050;font-weight:600;text-align:center"></div>
+  <div style="display:flex;gap:.8rem;align-items:center;flex-wrap:wrap">
+  <button class="btn-primary" id="btnConcluirGlobal" disabled style="background:#00B050;opacity:.4;cursor:not-allowed" title="Carregue uma planilha e filtre processos para habilitar">✓ Concluir análise</button>
+  <div class="toolbar-sep"></div>
+  <button class="btn-primary" id="btnExportAll" disabled>Exportar Excel (todas as salas)</button>
+  <div class="toolbar-sep"></div>
+  <button class="btn-secondary btn-sm" id="btnBackupExport" title="Salvar backup da análise">💾 Salvar backup</button>
+  <button class="btn-danger-sm" id="btnResetAll" title="Apagar tudo e recomeçar do zero">🗑 Reiniciar tudo</button>
+  <span class="save-indicator" id="saveIndicator"></span>
+  <span class="stats" id="globalStats"></span>
+  </div>
+</div>
+</div>
+<!-- Confirm modals -->
+<div class="confirm-overlay" id="confirmResetModal">
+  <div class="confirm-box">
+    <div class="modal-icon">⚠️</div>
+    <h2 class="modal-title">Reiniciar tudo</h2>
+    <p>Deseja realmente apagar todos os dados (salas, planilha, análises) e recomeçar do zero?<br><b style="color:var(--red)">Esta ação não pode ser desfeita.</b></p>
+    <div class="confirm-btns">
+      <button class="btn-confirm-cancel" id="resetCancelBtn">Cancelar</button>
+      <button class="btn-confirm-danger" id="resetConfirmBtn">🗑 Apagar tudo</button>
+    </div>
+  </div>
+</div>
+<div class="confirm-overlay" id="confirmClearSalaModal">
+  <div class="confirm-box">
+    <div class="modal-icon">🗑</div>
+    <h2 class="modal-title">Limpar Sala</h2>
+    <p>Deseja limpar todos os dados desta sala (processos, cores e filtros)?</p>
+    <div class="confirm-btns">
+      <button class="btn-confirm-cancel" id="clearSalaCancelBtn">Cancelar</button>
+      <button class="btn-confirm-danger" id="clearSalaConfirmBtn">Limpar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Ajuda -->
+<div class="generic-overlay" id="helpModal">
+  <div class="help-box">
+    <h3>❓ Como usar a Conferência de Pauta</h3>
+    <div class="help-step"><div class="help-num">1</div><div class="help-text"><b>Selecione a turma e identifique-se</b> — no modal de entrada, informe seu nome e selecione a turma (1ª a 13ª). Para trocar de turma, clique no <b>botão laranja</b> no canto superior direito — será pedida confirmação antes de trocar.</div></div>
+    <div class="help-step"><div class="help-num">2</div><div class="help-text"><b>Crie uma data de sessão</b> — digite a data no formato dd/mm/aaaa. Para sessões virtuais com período, após digitar a data inicial pressione a tecla <b>a</b> e complete o intervalo (ex: 01/06/2026 a 05/06/2026). Clique em <b>+ Adicionar</b> — a data aparecerá como um <b>botão laranja</b> clicável. Cada data representa uma sessão independente. Para editar uma data já criada, clique com o <b>botão direito</b> sobre ela.</div></div>
+    <div class="help-step"><div class="help-num">3</div><div class="help-text"><b>Carregue a planilha de cada relator</b> — cada aba é independente e recebe sua própria planilha do e-SIEST. Clique em <b>Selecionar planilha</b> na aba desejada. O nome do relator é extraído automaticamente. Trocar a planilha de uma aba não afeta as demais. Para remover, clique no botão <b>✕</b> ao lado de "Trocar planilha".</div></div>
+    <div class="help-step"><div class="help-num">4</div><div class="help-text"><b>Cole a lista de processos e filtre</b> — cole o texto da pauta no campo de cada aba (pode ser texto sujo). Clique em <b>Filtrar</b>. É possível colar listas adicionais e filtrar novamente sem perder a análise anterior — novos processos são acumulados e duplicatas ignoradas. Ao filtrar, processos sigilosos detectados são enviados automaticamente ao canal Teams configurado. O mesmo processo não é reenviado na mesma data, mas será reenviado em datas diferentes.</div></div>
+    <div class="help-step"><div class="help-num">5</div><div class="help-text"><b>Analise e classifique</b> — selecione processos e use os botões: 🟢 <b>Verde</b> (OK) e 🔷 <b>Azul escuro</b> (Adv. alterado e outras). Cores manuais nunca são sobrescritas pelas automáticas. As demais cores são aplicadas automaticamente: 🔴 Polo ativo sem advogado · 🟣 EF sem adv. passivo · 🔵 Polo ativo sem CNPJ · 🩷 Polo passivo sem CNPJ · 🟤 Impedimento · ⬛ Número iniciado com 0 (migrado) · 🟡 Não localizado na planilha. Os contadores (Encontrados, EF, Polo ativo sem adv. etc.) são fixos ao momento do filtro. O contador 🟢 🔷 ao lado do relator atualiza em tempo real conforme você pinta.</div></div>
+    <div class="help-step"><div class="help-num">6</div><div class="help-text"><b>Magistrados com impedimento</b> — cadastre os nomes em <b>⚙ Configurações</b>. A comparação é feita com a coluna "Juiz do Último Julgamento" da planilha. Processos com impedimento (marrom) são ignorados na verificação do Concluir análise.</div></div>
+    <div class="help-step"><div class="help-num">7</div><div class="help-text"><b>Conclua clicando em ✓ Concluir análise</b> — verifica se todos os processos de todas as salas foram classificados com verde ou azul. Se houver pendências, lista quais processos faltam por relator. Após concluir, clique em <b>Exportar Excel</b> para gerar a planilha consolidada.</div></div>
+    <hr class="help-divider">
+    <div class="help-text" style="margin-bottom:.5rem"><b>Legenda de cores:</b></div>
+    <div class="help-legend">
+      <div class="help-color"><div class="help-dot" style="background:#00B050"></div>Analisado/OK</div>
+      <div class="help-color"><div class="help-dot" style="background:#FF0000"></div>Polo ativo sem advogado</div>
+      <div class="help-color"><div class="help-dot" style="background:#003366"></div>Adv. alterado e outras</div>
+      <div class="help-color"><div class="help-dot" style="background:#FFFF00;border:1px solid #aaa"></div>Não localizado</div>
+      <div class="help-color"><div class="help-dot" style="background:#7B2D8E"></div>EF sem adv. passivo</div>
+      <div class="help-color"><div class="help-dot" style="background:#00838F"></div>Polo ativo sem CNPJ</div>
+      <div class="help-color"><div class="help-dot" style="background:#E91E63"></div>Polo passivo sem CNPJ</div>
+      <div class="help-color"><div class="help-dot" style="background:#6B3A2A"></div>Impedimento/Suspeição</div>
+      <div class="help-color"><div class="help-dot" style="background:#444"></div>Número iniciado com 0 (migrado)</div>
+    </div>
+    <hr class="help-divider">
+    <div class="help-text" style="margin-bottom:.6rem"><b>💾 Backup e segurança dos dados:</b></div>
+    <div class="help-text">O salvamento automático é <b>vinculado ao navegador e ao computador</b> — se trocar de PC, os dados não acompanham. Use <b>💾 Salvar backup</b> para baixar um arquivo <b>.json</b> com todas as datas da turma ativa. Guarde em local seguro — é a única forma de recuperar após um reset ou troca de computador. Para restaurar, use <b>Restaurar análise anterior</b>. Ao clicar em <b>🗑 Reiniciar tudo</b>, são apagados todos os dados de sessão e análises. São preservados apenas: nome do usuário, turma e histórico de sigilosos já enviados ao Teams.</div>
+    <hr class="help-divider">
+    <div class="help-text"><b>Sessões e turmas:</b> cada combinação turma + data é uma sessão independente. Trocar de data ou turma exibe confirmação e salva automaticamente.</div>
+    <div style="display:flex;justify-content:flex-end;margin-top:1.2rem"><button class="btn-primary" id="helpClose">Fechar</button></div>
+  </div>
+</div>
+
+<!-- Modal troca de sessão -->
+<div class="generic-overlay" id="switchSessionModal">
+  <div class="switch-box">
+    <div class="modal-icon">💾</div>
+    <h2 class="modal-title" id="switchModalTitle">Trocar sessão</h2>
+    <p id="switchModalMsg">Deseja salvar a análise atual antes de trocar?</p>
+    <div class="switch-btns">
+      <button class="btn-switch-save" id="switchSaveBtn">💾 Salvar e trocar</button>
+      <button class="btn-switch-nosave" id="switchNoSaveBtn">⚠ Trocar sem salvar</button>
+      <button class="btn-switch-cancel" id="switchCancelBtn">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal troca de turma -->
+<div class="generic-overlay" id="changeTurmaModal">
+  <div class="switch-box">
+    <div class="modal-icon">⚖</div>
+    <h2 class="modal-title">Trocar de Turma</h2>
+    <p>Selecione a turma para a qual deseja alternar:</p>
+    <select id="changeTurmaSelect" class="modal-select" style="margin-bottom:.8rem">
+      <option value="">— Selecione —</option>
+      <option value="1">1ª TURMA</option><option value="2">2ª TURMA</option>
+      <option value="3">3ª TURMA</option><option value="4">4ª TURMA</option>
+      <option value="5">5ª TURMA</option><option value="6">6ª TURMA</option>
+      <option value="7">7ª TURMA</option><option value="8">8ª TURMA</option>
+      <option value="9">9ª TURMA</option><option value="10">10ª TURMA</option>
+      <option value="11">11ª TURMA</option><option value="12">12ª TURMA</option>
+      <option value="13">13ª TURMA</option>
+    </select>
+    <div class="switch-btns">
+      <button class="btn-switch-save" id="changeTurmaConfirmBtn">Confirmar troca</button>
+      <button class="btn-switch-cancel" id="changeTurmaCancelBtn">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal edição de data (botão direito no chip) -->
+<div class="generic-overlay" id="editDateModal">
+  <div class="switch-box" style="width:420px">
+    <div class="modal-icon">✏️</div>
+    <h2 class="modal-title">Editar data</h2>
+    <p style="font-size:.82rem;color:var(--text-dim);margin:.3rem 0 .5rem">Data atual:</p>
+    <div id="editDateOriginal" style="font-size:1.1rem;font-weight:700;color:var(--text-dim);font-family:'JetBrains Mono',monospace;margin-bottom:.8rem;text-decoration:line-through;opacity:.6"></div>
+    <p style="font-size:.82rem;color:var(--text-dim);margin:.3rem 0 .4rem">Nova data:</p>
+    <input type="text" id="editDateInput" class="modal-input" placeholder="dd/mm/aaaaaa ou período" maxlength="23" style="font-family:'JetBrains Mono',monospace;letter-spacing:.05em;text-align:center">
+    <div id="editDateError" style="font-size:.72rem;color:var(--red);min-height:1.1rem;margin-top:.3rem"></div>
+    <div class="switch-btns" style="margin-top:1rem">
+      <button class="btn-switch-save" id="editDateConfirmBtn">✓ Confirmar alteração</button>
+      <button class="btn-switch-cancel" id="editDateCancelBtn">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal confirmação data -->
+<div class="generic-overlay" id="confirmDateModal">
+  <div class="switch-box" style="width:420px">
+    <div class="modal-icon">📅</div>
+    <h2 class="modal-title">Confirmar data</h2>
+    <p style="font-size:.82rem;color:var(--text-dim);margin:.3rem 0 .8rem">A data digitada está correta?</p>
+    <div id="confirmDateValue" style="font-size:2rem;font-weight:700;color:var(--accent);font-family:'JetBrains Mono',monospace;letter-spacing:.06em;padding:.8rem 0;border:2px solid var(--accent);border-radius:12px;margin:.4rem 0 1.2rem;text-align:center;background:var(--accent-dim)"></div>
+    <div class="switch-btns">
+      <button class="btn-switch-save" id="confirmDateYesBtn">✓ Sim, adicionar</button>
+      <button class="btn-switch-cancel" id="confirmDateNoBtn">✕ Corrigir data</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal confirmação troca de turma -->
+<div class="generic-overlay" id="trocaTurmaModal">
+  <div class="switch-box">
+    <div class="modal-icon">⚖</div>
+    <h2 class="modal-title">Trocar de Turma</h2>
+    <p id="trocaTurmaMsg" style="font-size:.85rem;color:var(--text-dim);margin:.5rem 0 1.2rem;line-height:1.5"></p>
+    <div class="switch-btns">
+      <button class="btn-switch-save" id="trocaTurmaSalvarBtn">💾 Salvar e trocar</button>
+      <button class="btn-switch-nosave" id="trocaTurmaSemSalvarBtn">⚠ Trocar sem salvar</button>
+      <button class="btn-switch-cancel" id="trocaTurmaCancelarBtn">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+// TURMA & SESSION
+const TURMAS_LABEL={1:'1ª TURMA',2:'2ª TURMA',3:'3ª TURMA',4:'4ª TURMA',5:'5ª TURMA',6:'6ª TURMA',7:'7ª TURMA',8:'8ª TURMA',9:'9ª TURMA',10:'10ª TURMA',11:'11ª TURMA',12:'12ª TURMA',13:'13ª TURMA'};
+const TURMA_KEY='conf_pauta_turma';
+const NAME_KEY='filtro_esiest_user_name';
+// ─────────────────────────────────────────────────────────
+// WEBHOOK — URL do Google Apps Script proxy (não a URL real do Teams)
+const TEAMS_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbzDOtc_V4-YSWRq1tLns2LhDTft2WutULolNSqXrpfN4xNAJ_sbDv4bVaIz_oosRk4t/exec'; // ← INSIRA A URL DO APPS SCRIPT AQUI
+// Token de segurança — deve ser idêntico ao SECRET_TOKEN do Apps Script
+const TEAMS_SECRET_TOKEN = 'coju4webhookconfpauta'; // ← INSIRA O TOKEN DO WEBHOOK TEAMS AQUI
+// ─────────────────────────────────────────────────────────
+// TELEMETRIA — Google Apps Script
+const TELEMETRIA_URL = 'https://script.google.com/macros/s/AKfycbzecArP4q2e5rj13VQE2rFJrJjyl84ce61j2OTIo1g_6iERL5RoH7Mo-Gs7edcQYK7-/exec';
+const TELEMETRIA_SECRET_TOKEN = 'coju4telemetriaconfpauta'; // ← INSIRA O TOKEN DA TELEMETRIA AQUI
+// ─────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────
+// Chave localStorage para controlar sigilosos já enviados
+const SIGILO_SENT_KEY = 'conf_pauta_sigilo_sent';
+const SESSIONS_INDEX_PREFIX='conf_pauta_v3_idx_';
+const SESSION_DATA_PREFIX='conf_pauta_v3_data_';
+let currentTurma=null;
+let currentDateStr=null;
+let pendingSwitchCallback=null;
+function sessionKey(turma,dateStr){return SESSION_DATA_PREFIX+turma+'_'+dateStr.replace(/[^0-9a-zA-Z]/g,'_');}
+function indexKey(turma){return SESSIONS_INDEX_PREFIX+turma;}
+function getSessionIndex(turma){try{return JSON.parse(localStorage.getItem(indexKey(turma)))||[]}catch(e){return[]}}
+function saveSessionIndex(turma,arr){localStorage.setItem(indexKey(turma),JSON.stringify(arr));}
+
+const VISIBLE_COLS=['Unidade','Número do Processo','Classe','Unidade Judiciária de Origem do Processo','Classe do Proc. de Origem - Padrão CNJ','Órgão Julgador Colegiado','Polo Ativo (principal)','CPF/CNPJ do Polo Ativo (principal)','Advogado do Polo Ativo (principal)','Polo Passivo (principal)','CPF/CNPJ do Polo Passivo (principal)','Advogado do Polo Passivo (principal)','Juiz do Último Julgamento do Processo de Origem'];
+let sigiloColIdx=-1;
+// Dados de planilha por sala (índice 0-3). Cada sala tem seu próprio workbook.
+const salaWorkbooks=Array.from({length:4},()=>({
+  workbook:null,allHeaders:[],dataRows:[],dataRowIndices:[],
+  headerRowIdx:0,cnjColIndex:0,advColIdx:-1,sigiloColIdx:-1,
+  visibleColIndices:[],acervoDesName:''
+}));
+// Sala ativa no momento do filtro — usado por loadSheet e handleFile
+let _activeSalaForLoad=0;
+// Aliases dinâmicos — apontam para a sala ativa no filterSala
+let workbook=null,allHeaders=[],dataRows=[],dataRowIndices=[],headerRowIdx=0,currentSheetIdx=0;
+let cnjColIndex=0,advColIdx=-1,visibleColIndices=[],acervoDesName='';
+const NUM_SALAS=4;
+const salas=Array.from({length:NUM_SALAS},()=>({salaName:'',filteredRows:[],filteredRowIndices:[],rowColors:{},notFoundList:[],cnjListRaw:'',colFilters:{}}));
+let activeSala=0;
+if(typeof XLSX==='undefined'){document.body.innerHTML='<div style="color:#f87171;padding:2rem;font-size:1.2rem;">Erro: XLSX não carregou. Recarregue (Ctrl+Shift+R).</div>';}
+
+function normCNJ(s){return String(s||'').replace(/\D/g,'')}
+const CNJ_PATTERN=/\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}/g;
+function extractCNJs(t){return t.match(CNJ_PATTERN)||[]}
+function uniqueArr(a){const s={};return a.filter(v=>s[v]?false:(s[v]=true))}
+
+// salaName agora vem da data de sessão ativa (currentDateStr)
+function getSalaName(){return currentDateStr||'';}
+
+// BUILD PANELS
+// Cada aba representa um relator com sua própria planilha e lista de processos.
+// Trocar a planilha de uma aba não afeta as demais.
+(function(){
+  const c=$('salasContainer');
+  for(let i=0;i<NUM_SALAS;i++){
+    const cls=i===0?'sala-panel active':'sala-panel';
+    c.innerHTML+=`<div class="${cls}" id="sala${i}">
+      <div class="sala-panel-top">
+      <div class="card" style="margin-bottom:0">
+        <div class="card-label" style="margin-bottom:.5rem">📊 Planilha do acervo (Relator ${i+1})</div>
+        <div style="font-size:.72rem;color:var(--text-dim);margin-bottom:.5rem;font-style:italic">Carregue o Excel do e-SIEST deste relator. Cada aba é independente — troque sem perder análises das outras.</div>
+        <div style="display:flex;align-items:center;gap:.8rem;flex-wrap:wrap">
+          <div class="dropzone-mini sala-dz" data-sala="${i}" id="dropzone${i}">
+            <input type="file" class="sala-file-input" data-sala="${i}" id="fileInput${i}" accept=".xlsx,.xls,.csv" style="display:none">
+            <span class="sala-dz-text" id="dropzoneText${i}">📂 Selecionar planilha</span>
+          </div>
+          <span class="acervo-name sala-acervo-name" id="acervoName${i}" style="display:none"></span>
+          <span class="sala-acervo-file" id="acervoFile${i}" style="font-size:.72rem;color:var(--text-dim);font-family:'JetBrains Mono',monospace"></span>
+          <button class="btn-secondary btn-sm sala-trocar-excel" data-sala="${i}" id="btnTrocarExcel${i}" style="display:none">Trocar planilha</button>
+          <button class="btn-danger-sm sala-excluir-excel" data-sala="${i}" id="btnExcluirExcel${i}" style="display:none;padding:.3rem .6rem" title="Remover planilha desta aba">✕</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-label" style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap">
+          <span id="labelRelator${i}">Lista de processos — Relator ${i+1}</span>
+          <span class="badge cnj-count" data-sala="${i}">—</span>
+        </div>
+        <div id="progressBar${i}" style="display:none;margin-top:.35rem;font-size:.72rem;color:var(--text-dim)">
+          Contador de progresso na análise:
+          <span class="badge" id="countGreen${i}" style="background:#00B05022;color:#00B050;border:1px solid #00B050;margin-left:.4rem" title="Analisados OK (verde)">🟢 0</span>
+          <span class="badge" id="countOrange${i}" style="background:#00336622;color:#6699cc;border:1px solid #003366;margin-left:.3rem" title="Adv. alterado e outras (azul escuro)">🔷 0</span>
+        </div>
+        <textarea class="cnj-input" data-sala="${i}" style="margin-top:.6rem" placeholder="Cole a lista de processos (pode ser texto sujo — os CNJs serão extraídos automaticamente)"></textarea>
+        <div class="dup-info" data-sala="${i}" style="margin-top:.3rem"></div>
+        <div style="display:none"><label class="option-check"><input type="checkbox" class="chk-norm" data-sala="${i}" checked>Normalizar</label></div>
+      </div>
+      </div><!-- fim sala-panel-top -->
+      <div class="actions-bar">
+        <button class="btn-primary btn-filter" data-sala="${i}" disabled>Filtrar</button>
+        <button class="btn-secondary btn-clear-sala" data-sala="${i}" disabled>Limpar Sala</button>
+        <div style="display:flex;flex-direction:column;gap:.2rem;flex:1">
+          <div style="font-size:.62rem;color:var(--text-dim);opacity:.6;font-style:italic">Obs: os contadores abaixo são fixos e refletem as características dos processos no momento do filtro, independente de cores atribuídas posteriormente.</div>
+          <div class="stats sala-stats" data-sala="${i}"></div>
+        </div>
+      </div>
+      <div class="card imped-area" data-sala="${i}" style="display:none">
+        <div class="card-label">⚠ Impedimento / Suspeição</div>
+        <div class="imped-checks imped-checks-area" data-sala="${i}"></div>
+        <div style="font-size:.65rem;color:var(--text-dim);margin-top:.4rem">Marque os magistrados a conferir. Nomes são cadastrados em ⚙ Configurações.</div>
+      </div>
+      <div class="not-found-section nf-section" data-sala="${i}">
+        <button class="nf-toggle nf-toggle-btn" data-sala="${i}"></button>
+        <button class="nf-toggle nf-copy nf-copy-btn" data-sala="${i}">Copiar processos não encontrados no Excel</button>
+        <div class="nf-list nf-list-div" data-sala="${i}"></div>
+      </div>
+      <div class="color-toolbar ct" data-sala="${i}">
+        <label>Pintar:</label>
+        <button class="color-btn cb" data-color="green" data-sala="${i}" title="Analisado OK"></button>
+        <button class="color-btn cb" data-color="orange" data-sala="${i}" title="Adv. alterado e outras"></button>
+        <button class="color-btn cb" data-color="none" data-sala="${i}" title="Remover cor"></button>
+        <div class="toolbar-sep"></div>
+        <label>Filtrar cor:</label>
+        <select class="filter-select cf" data-sala="${i}">
+          <option value="all">Todas</option><option value="none">Sem cor</option>
+          <option value="green">🟢 OK</option><option value="orange">🔷 Adv. alterado e outras</option><option value="red">🔴 Polo ativo sem adv.</option>
+          <option value="yellow">🟡 Não loc.</option><option value="purple">🟣 Execução Fiscal sem adv</option>
+          <option value="teal">🔵 Polo ativo sem CNPJ</option><option value="pink" style="color:#E91E63">⬤ Polo passivo sem CNPJ</option><option value="brown">🟤 Impedimento</option>
+          <option value="migrado">⬛ Migrados</option>
+        </select>
+        <div class="toolbar-sep"></div>
+        <span class="sel-count sc" data-sala="${i}">0 sel.</span>
+        <div class="toolbar-sep"></div>
+        <button class="btn-secondary btn-sm btn-copy-cnjs" data-sala="${i}">Copiar processos selecionados</button>
+        <div class="toolbar-sep"></div>
+        <button class="btn-secondary btn-sm btn-clear-col-filters" data-sala="${i}" title="Limpar todos os filtros de coluna">✕ Limpar filtros</button>
+      </div>
+      <div class="table-wrap tw" data-sala="${i}">
+        <div class="table-scroll"><table><thead class="th" data-sala="${i}"></thead><tbody class="tb" data-sala="${i}"></tbody></table></div>
+      </div>
+    </div>`;
+  }
+})();
+
+const q=(sel,sala)=>document.querySelector(`${sel}[data-sala="${sala}"]`);
+
+// FILE
+// Registrar dropzone e input por sala
+for(let _si=0;_si<NUM_SALAS;_si++){
+  (function(s){
+    const dz=document.getElementById('dropzone'+s);
+    const fi=document.getElementById('fileInput'+s);
+    if(!dz||!fi)return;
+    dz.addEventListener('click',()=>fi.click());
+    dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('loaded')});
+    dz.addEventListener('dragleave',()=>{if(!salaWorkbooks[s].workbook)dz.classList.remove('loaded')});
+    dz.addEventListener('drop',e=>{e.preventDefault();if(e.dataTransfer.files.length)handleFile(e.dataTransfer.files[0],s)});
+    fi.addEventListener('change',()=>{if(fi.files.length)handleFile(fi.files[0],s)});
+  })(_si);
+}
+document.addEventListener('click',e=>{
+  const btn=e.target.closest('.sala-trocar-excel');
+  if(btn){const s=+btn.dataset.sala;const fi=document.getElementById('fileInput'+s);if(fi){fi.value='';fi.click();}}
+});
+
+document.addEventListener('click',e=>{
+  const btn=e.target.closest('.sala-excluir-excel');
+  if(!btn)return;
+  const s=+btn.dataset.sala;
+  if(!confirm('Remover a planilha do Relator '+(s+1)+'? A lista de processos e análise desta aba serão mantidas.'))return;
+  // Limpar workbook da sala
+  salaWorkbooks[s].workbook=null;salaWorkbooks[s].allHeaders=[];salaWorkbooks[s].dataRows=[];
+  salaWorkbooks[s].dataRowIndices=[];salaWorkbooks[s].acervoDesName='';
+  salaWorkbooks[s].visibleColIndices=[];salaWorkbooks[s].advColIdx=-1;salaWorkbooks[s].sigiloColIdx=-1;
+  // Limpar IndexedDB desta sala
+  openDB().then(db=>{const tx=db.transaction(DB_STORE,'readwrite');tx.objectStore(DB_STORE).delete('excel_'+s);}).catch(()=>{});
+  // Resetar UI
+  const dzEl=document.getElementById('dropzone'+s);if(dzEl)dzEl.classList.remove('loaded');
+  const dzTxt=document.getElementById('dropzoneText'+s);if(dzTxt)dzTxt.textContent='\uD83D\uDCC2 Selecionar planilha';
+  const af=document.getElementById('acervoFile'+s);if(af)af.textContent='';
+  const an=document.getElementById('acervoName'+s);if(an){an.textContent='';an.style.display='none';}
+  const btnT=document.getElementById('btnTrocarExcel'+s);if(btnT)btnT.style.display='none';
+  btn.style.display='none';
+  // Resetar label do relator
+  const lr=document.getElementById('labelRelator'+s);if(lr)lr.textContent='Lista de processos — Relator '+(s+1);
+  // Resetar nome da aba
+  const tabBtn=document.querySelector('.tab-btn[data-sala="'+s+'"]');
+  if(tabBtn){const dot=tabBtn.querySelector('.tab-dot');tabBtn.textContent='Relator '+(s+1);if(dot)tabBtn.appendChild(dot);}
+  // Desabilitar filtrar
+  q('.btn-filter',s).disabled=true;
+  updateAllFilterBtns();
+  const ind=$('saveIndicator');ind.textContent='\u2713 Planilha removida';ind.classList.add('show');setTimeout(()=>ind.classList.remove('show'),2000);
+});
+
+function handleFile(file,s){
+  if(typeof XLSX==='undefined'){alert('XLSX não carregou.');return}
+  // s = índice da sala (0-3)
+  if(s===undefined)s=activeSala;
+  _activeSalaForLoad=s;
+  const sw=salaWorkbooks[s];
+  const dzText=document.getElementById('dropzoneText'+s);
+  const dzEl=document.getElementById('dropzone'+s);
+  if(dzText)dzText.textContent='Carregando...';
+  const reader=new FileReader();
+  reader.onerror=()=>alert('Erro ao ler arquivo.');
+  reader.onload=e=>{
+    try{
+      let wb;
+      try{wb=XLSX.read(e.target.result,{type:'array',cellDates:true,cellStyles:true})}
+      catch(se){wb=XLSX.read(e.target.result,{type:'array',cellDates:true})}
+      workbook=wb;sw.workbook=wb;
+      loadSheet(0);if(dzEl)dzEl.classList.add('loaded');
+      if(dzText)dzText.textContent='\ud83d\udcc2 '+file.name;
+      const af=document.getElementById('acervoFile'+s);
+      if(af)af.textContent=`(${(file.size/1024).toFixed(0)} KB \u00b7 ${sw.dataRows.length.toLocaleString('pt-BR')} processos)`;
+      const btnT=document.getElementById('btnTrocarExcel'+s);if(btnT)btnT.style.display='inline-block';const btnX=document.getElementById('btnExcluirExcel'+s);if(btnX)btnX.style.display='inline-block';
+      const ui=sw.allHeaders.findIndex(h=>h.toLowerCase()==='unidade');
+      if(ui>=0&&sw.dataRows.length>0){
+        const raw=String(sw.dataRows[0][ui]||'');
+        const m=raw.match(/(?:desembargador(?:a)?\s+federal\s+)(.+)/i);
+        sw.acervoDesName=m?m[1].trim():raw;
+        const an=document.getElementById('acervoName'+s);
+        if(an){an.textContent='Acervo: Des. '+sw.acervoDesName;an.style.display='inline';}
+        // Atualizar label da lista de processos com nome do relator
+        const lr=document.getElementById('labelRelator'+s);
+        if(lr)lr.textContent='Lista de processos — '+sw.acervoDesName;
+        // Atualizar nome da aba com o relator — adicionar (2),(3)... se nome já usado em outra aba
+        const tabBtn=document.querySelector('.tab-btn[data-sala="'+s+'"]');
+        if(tabBtn){
+          const dot=tabBtn.querySelector('.tab-dot');
+          // Contar quantas outras abas já têm o mesmo nome base
+          let labelName=sw.acervoDesName;
+          let count=0;
+          for(let _tn=0;_tn<NUM_SALAS;_tn++){
+            if(_tn===s)continue;
+            if(salaWorkbooks[_tn].acervoDesName===sw.acervoDesName)count++;
+          }
+          if(count>0)labelName=sw.acervoDesName+' ('+(count+1)+')';
+          tabBtn.textContent='';
+          tabBtn.appendChild(document.createTextNode(labelName));
+          if(dot)tabBtn.appendChild(dot);
+        }
+      }
+      updateAllFilterBtns();
+      const buf=e.target.result.slice(0);
+      saveExcelToDB(buf,file.name,s).then(()=>{const ind=$('saveIndicator');ind.textContent='\u2713 Planilha salva (Relator '+(s+1)+')';ind.classList.add('show');setTimeout(()=>ind.classList.remove('show'),2000)}).catch(err=>console.warn('saveExcelToDB:',err));
+    }catch(err){alert('Erro: '+err.message)}
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function loadSheet(idx){
+  const sw=salaWorkbooks[_activeSalaForLoad];
+  currentSheetIdx=idx;sw.workbook=workbook;
+  const ws=workbook.Sheets[workbook.SheetNames[idx]];
+  const json=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+  sw.headerRowIdx=0;
+  for(let i=0;i<Math.min(json.length,20);i++){if(json[i].filter(c=>c!=='').length>=3){sw.headerRowIdx=i;break}}
+  sw.allHeaders=json[sw.headerRowIdx].map(h=>String(h||'').trim());
+  sw.dataRows=[];sw.dataRowIndices=[];
+  for(let i=sw.headerRowIdx+1;i<json.length;i++){if(json[i].some(c=>c!=='')){{sw.dataRows.push(json[i]);sw.dataRowIndices.push(i)}}}
+  sw.cnjColIndex=sw.allHeaders.findIndex(h=>/n[úu]mero.*processo/i.test(h));if(sw.cnjColIndex<0)sw.cnjColIndex=0;
+  sw.advColIdx=sw.allHeaders.findIndex(h=>/advogado.*polo\s*ativo/i.test(h));
+  sw.sigiloColIdx=sw.allHeaders.findIndex(h=>/sigilo|segredo\s*de\s*justi/i.test(h));
+  sw.visibleColIndices=[];
+  VISIBLE_COLS.forEach(vc=>{const idx2=sw.allHeaders.findIndex(h=>h.toLowerCase()===vc.toLowerCase());if(idx2>=0&&!sw.visibleColIndices.includes(idx2))sw.visibleColIndices.push(idx2)});
+  if(!sw.visibleColIndices.includes(sw.cnjColIndex))sw.visibleColIndices.unshift(sw.cnjColIndex);
+  if(sw.sigiloColIdx>=0&&!sw.visibleColIndices.includes(sw.sigiloColIdx))sw.visibleColIndices.push(sw.sigiloColIdx);
+  // Atualizar aliases globais para a sala ativa
+  allHeaders=sw.allHeaders;dataRows=sw.dataRows;dataRowIndices=sw.dataRowIndices;
+  cnjColIndex=sw.cnjColIndex;advColIdx=sw.advColIdx;sigiloColIdx=sw.sigiloColIdx;
+  visibleColIndices=sw.visibleColIndices;acervoDesName=sw.acervoDesName;
+}
+// Aponta aliases globais para os dados da sala s antes de filtrar
+function setActiveSalaData(s){
+  const sw=salaWorkbooks[s];
+  workbook=sw.workbook;allHeaders=sw.allHeaders;dataRows=sw.dataRows;
+  dataRowIndices=sw.dataRowIndices;cnjColIndex=sw.cnjColIndex;
+  advColIdx=sw.advColIdx;sigiloColIdx=sw.sigiloColIdx;
+  visibleColIndices=sw.visibleColIndices;acervoDesName=sw.acervoDesName;
+}
+
+function updateAllFilterBtns(){for(let i=0;i<NUM_SALAS;i++){const ta=q('.cnj-input',i);const cnt=extractCNJs(ta?ta.value:'').length;q('.btn-filter',i).disabled=!(cnt>0&&salaWorkbooks[i].dataRows.length>0)}}
+
+function updateTextareaLock(){
+  const locked=!currentDateStr;
+  for(let i=0;i<NUM_SALAS;i++){
+    const ta=q('.cnj-input',i);if(!ta)continue;
+    ta.readOnly=locked;
+    ta.style.opacity=locked?'.4':'1';
+    ta.style.cursor=locked?'not-allowed':'';
+    ta.placeholder=locked
+      ?'⚠ Selecione ou crie uma data de sessão antes de inserir processos'
+      :'Cole a lista de processos da sala de sessão (pode ser texto sujo — os CNJs serão extraídos automaticamente)';
+  }
+}
+
+function updateSessionDateDisplay(){
+  const el=$('sessionDateDisplay');
+  if(!el)return;
+  if(currentDateStr&&currentTurma){
+    $('sessionTurmaDisplay').textContent=TURMAS_LABEL[currentTurma]||('Turma '+currentTurma);
+    $('sessionDateText').textContent=currentDateStr;
+    el.style.display='flex';
+  } else {
+    el.style.display='none';
+  }
+}
+
+// TABS
+document.querySelectorAll('.tab-btn').forEach(btn=>{btn.addEventListener('click',()=>{const s=+btn.dataset.sala;activeSala=s;document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.querySelectorAll('.sala-panel').forEach(p=>p.classList.remove('active'));$('sala'+s).classList.add('active');autoSave()})});
+function updateTabDot(s){const dot=document.querySelector(`.tab-dot[data-sala="${s}"]`);if(dot)dot.classList.toggle('has-data',salas[s].filteredRows.length>0||salas[s].notFoundList.length>0)}
+
+function updateColorCounters(s){
+  const S=salas[s];
+  let green=0,orange=0;
+  Object.values(S.rowColors).forEach(c=>{if(c==='green')green++;else if(c==='orange')orange++;});
+  const cg=document.getElementById('countGreen'+s);
+  const co=document.getElementById('countOrange'+s);
+  const pb=document.getElementById('progressBar'+s);
+  const bc=document.getElementById('btnConcluir'+s);
+  const hasData=S.filteredRows.length>0||S.notFoundList.length>0;
+  if(cg)cg.textContent='🟢 '+green;
+  if(co)co.textContent='🔷 '+orange;
+  if(pb)pb.style.display=hasData?'block':'none';
+  if(bc)bc.style.display=hasData?'inline-block':'none';
+}
+
+// CNJ INPUT
+document.addEventListener('paste',e=>{if(e.target.classList.contains('cnj-input'))setTimeout(()=>cleanCNJ(+e.target.dataset.sala),50)});
+document.addEventListener('blur',e=>{if(e.target.classList.contains('cnj-input'))cleanCNJ(+e.target.dataset.sala)},true);
+document.addEventListener('input',e=>{if(e.target.classList.contains('cnj-input')){const s=+e.target.dataset.sala;const cnt=extractCNJs(e.target.value).length;q('.cnj-count',s).textContent=cnt>0?cnt:'—';q('.btn-filter',s).disabled=!(cnt>0&&salaWorkbooks[s].dataRows.length>0)}});
+
+function cleanCNJ(s){const ta=q('.cnj-input',s);const raw=ta.value,all=extractCNJs(raw),uniq=uniqueArr(all),dup=all.length-uniq.length;if(uniq.length>0)ta.value=uniq.join('\n');else if(raw.trim().length>0)ta.value='';q('.cnj-count',s).textContent=uniq.length>0?uniq.length:'—';const di=document.querySelector(`.dup-info[data-sala="${s}"]`);di.innerHTML=dup>0?`<span class="dup-badge">⚠ ${dup} duplicata${dup>1?'s':''} removida${dup>1?'s':''}</span>`:'';q('.btn-filter',s).disabled=!(uniq.length>0&&salaWorkbooks[s].dataRows.length>0);autoSave()}
+
+// PJe
+const PJE_URL='https://pje2g.trf1.jus.br/pje/Processo/ConsultaProcesso/listView.seam';
+function getPjeUrl(){return PJE_URL}
+let pjeWindow=null;
+
+// ============================================
+// SETTINGS — Magistrados para impedimento
+// ============================================
+const IMPED_KEY='conf_pauta_magistrados';
+function getImpedNomes(){try{return JSON.parse(localStorage.getItem(IMPED_KEY))||[]}catch(e){return[]}}
+function saveImpedNomes(arr){localStorage.setItem(IMPED_KEY,JSON.stringify(arr))}
+
+function renderImpedSettings(){
+  const list=$('impedList');
+  const nomes=getImpedNomes();
+  list.innerHTML=nomes.map((n,i)=>`<div class="settings-item"><span>${n}</span><button class="btn-rm" data-imped-idx="${i}" title="Remover">✕</button></div>`).join('');
+  if(!nomes.length)list.innerHTML='<div style="font-size:.75rem;color:var(--text-dim)">Nenhum magistrado cadastrado.</div>';
+  // Also update impediment checkboxes in all salas
+  renderImpedCheckboxes();
+}
+function renderImpedCheckboxes(){
+  const nomes=getImpedNomes();
+  for(let i=0;i<NUM_SALAS;i++){
+    const area=document.querySelector(`.imped-checks-area[data-sala="${i}"]`);
+    const card=document.querySelector(`.imped-area[data-sala="${i}"]`);
+    if(!area)continue;
+    if(!nomes.length){card.style.display='none';continue}
+    card.style.display='';
+    area.innerHTML=nomes.map(n=>`<label class="imped-check"><input type="checkbox" class="imped-cb" data-sala="${i}" value="${n.replace(/"/g,'&quot;')}" checked>${n}</label>`).join('');
+  }
+}
+
+$('btnSettings').addEventListener('click',()=>{$('settingsModal').classList.add('show');renderImpedSettings()});
+$('settingsClose').addEventListener('click',()=>{$('settingsModal').classList.remove('show')});
+$('settingsModal').addEventListener('click',e=>{if(e.target===$('settingsModal'))$('settingsModal').classList.remove('show')});
+$('impedAddBtn').addEventListener('click',()=>{
+  const inp=$('impedNewName'),name=inp.value.trim().toUpperCase();
+  if(!name)return;
+  const nomes=getImpedNomes();
+  if(nomes.includes(name)){inp.value='';return}
+  nomes.push(name);saveImpedNomes(nomes);inp.value='';renderImpedSettings();
+});
+$('impedNewName').addEventListener('keydown',e=>{if(e.key==='Enter')$('impedAddBtn').click()});
+document.addEventListener('click',e=>{
+  if(e.target.classList.contains('btn-rm')&&e.target.dataset.impedIdx!==undefined){
+    const nomes=getImpedNomes();nomes.splice(+e.target.dataset.impedIdx,1);saveImpedNomes(nomes);renderImpedSettings();
+  }
+});
+// Init impediment checkboxes on load
+setTimeout(renderImpedCheckboxes,100);
+
+// FILTER
+document.addEventListener('click',e=>{const btn=e.target.closest('.btn-filter');if(btn)filterSala(+btn.dataset.sala)});
+
+function filterSala(s){
+  // Apontar variáveis globais para a planilha desta sala antes de filtrar
+  setActiveSalaData(s);
+  const ta=q('.cnj-input',s),raw=ta.value.trim();
+  const cnjList=raw?raw.split(/[\n\r]+/).map(x=>x.trim()).filter(Boolean):[];
+  const normalize=q('.chk-norm',s).checked;
+  const searchSet=new Set(normalize?cnjList.map(normCNJ):cnjList);
+  const foundSet=new Set();const S=salas[s];
+  // MERGE: preservar análise anterior — não resetar rowColors
+  // Remover da lista existente apenas os CNJs que vieram da lista atual (serão re-adicionados)
+  // Manter apenas processos cujos CNJs NÃO estão na nova busca (não serão duplicados)
+  const keepRows=[],keepIdx=[];
+  S.filteredRows.forEach((row,i)=>{
+    const cnj=String(row[cnjColIndex]||'').trim();
+    const cnjN=normalize?normCNJ(cnj):cnj;
+    if(!searchSet.has(cnjN)){keepRows.push(row);keepIdx.push(S.filteredRowIndices[i]);}
+    else foundSet.add(cnjN); // marcar como já presente (será re-adicionado)
+  });
+  // Preservar cores manuais por CNJ bruto (nunca normalizado) — evita colisão entre CNJs distintos
+  const savedColorsByCNJ={};
+  S.filteredRows.forEach((row,i)=>{
+    const cnj=String(row[cnjColIndex]||'').trim();
+    const color=S.rowColors[i];
+    if(color)savedColorsByCNJ[cnj]=color; // chave sempre bruta
+  });
+  S.filteredRows=keepRows;S.filteredRowIndices=keepIdx;S.colFilters={};
+  // Zerar rowColors antes de reconstruir — evita que índices antigos contaminem novos processos
+  S.rowColors={};
+  for(let di=0;di<dataRows.length;di++){const row=dataRows[di],val=String(row[cnjColIndex]||''),key=normalize?normCNJ(val):val;if(searchSet.has(key)){S.filteredRows.push(row);S.filteredRowIndices.push(dataRowIndices[di]);foundSet.add(key)}}
+  // Restaurar cores manuais por CNJ bruto
+  S.filteredRows.forEach((row,i)=>{
+    const cnj=String(row[cnjColIndex]||'').trim();
+    if(savedColorsByCNJ[cnj])S.rowColors[i]=savedColorsByCNJ[cnj];
+  });
+  const MANUAL_COLORS=new Set(['green','orange']);
+  let redCount=0;
+  if(advColIdx>=0){S.filteredRows.forEach((row,i)=>{const adv=String(row[advColIdx]||'').trim().toLowerCase();if(adv==='registro nulo'||adv===''){if(!MANUAL_COLORS.has(S.rowColors[i]))S.rowColors[i]='red';redCount++}})}
+  // Auto-mark teal: polo ativo sem CNPJ
+  const cpfAtivoIdx=allHeaders.findIndex(h=>/cpf.*cnpj.*polo\s*ativo/i.test(h));
+  let tealCount=0;
+  if(cpfAtivoIdx>=0){S.filteredRows.forEach((row,i)=>{const v=String(row[cpfAtivoIdx]||'').trim().toLowerCase();if(v==='registro nulo'||v===''){if(!S.rowColors[i])S.rowColors[i]='teal';tealCount++}})}
+  // Auto-mark pink: polo passivo sem CNPJ
+  const cpfPassivoIdx=allHeaders.findIndex(h=>/cpf.*cnpj.*polo\s*passivo/i.test(h));
+  let pinkCount=0;
+  if(cpfPassivoIdx>=0){S.filteredRows.forEach((row,i)=>{const v=String(row[cpfPassivoIdx]||'').trim().toLowerCase();if(v==='registro nulo'||v===''){if(!S.rowColors[i])S.rowColors[i]='pink';pinkCount++}})}
+  // Auto-mark purple: Execução Fiscal pura (sem adv. polo passivo)
+  const efColIdx=allHeaders.findIndex(h=>/classe.*proc.*origem.*cnj/i.test(h));
+  const advPassivoIdx=allHeaders.findIndex(h=>/advogado.*polo\s*passivo/i.test(h));
+  let efCount=0,efSemAdvCount=0;
+  if(efColIdx>=0){
+    S.filteredRows.forEach((row,i)=>{
+      const cl=String(row[efColIdx]||'').trim().toLowerCase();
+      const isEfPura=cl==='execução fiscal'||cl==='execucao fiscal';
+      if(isEfPura){
+        efCount++;
+        const advP=advPassivoIdx>=0?String(row[advPassivoIdx]||'').trim().toLowerCase():'';
+        const semAdv=advP===''||advP==='registro nulo';
+        if(semAdv){efSemAdvCount++;if(!S.rowColors[i])S.rowColors[i]='purple';}
+      }
+    });
+  }
+  // Auto-mark brown: Impedimento/Suspeição
+  const juizColIdx=allHeaders.findIndex(h=>/ju[ií]z.*[uú]ltimo.*julgamento.*origem/i.test(h));
+  let brownCount=0;
+  if(juizColIdx>=0){
+    const impedCbs=document.querySelectorAll(`.imped-cb[data-sala="${s}"]:checked`);
+    const impedNomes=[];impedCbs.forEach(cb=>impedNomes.push(cb.value.toLowerCase()));
+    if(impedNomes.length>0){
+      S.filteredRows.forEach((row,i)=>{
+        const juiz=String(row[juizColIdx]||'').trim().toLowerCase();
+        if(juiz&&impedNomes.some(n=>juiz.includes(n))){if(!MANUAL_COLORS.has(S.rowColors[i]))S.rowColors[i]='brown';brownCount++}
+      });
+    }
+  }
+  S.notFoundList=cnjList.filter(c=>!foundSet.has(normalize?normCNJ(c):c));
+  // Pintar amarelo apenas se não houver cor manual já aplicada
+  S.notFoundList.forEach((cnj,i)=>{
+    const idx=S.filteredRows.length+i;
+    if(!MANUAL_COLORS.has(S.rowColors[idx]))S.rowColors[idx]='yellow';
+  });
+  const redLabel=redCount>0?` · <span style="color:#FF0000;font-weight:600">Polo ativo sem adv.: ${redCount}</span>`:'';
+  const efLabel=efCount>0?` · <span style="color:#7B2D8E;font-weight:600">Execuções Fiscais: ${efCount} <span style="cursor:help;font-size:.65rem;background:var(--surface2);border-radius:50%;padding:0 4px;border:1px solid var(--border)" title="Total de processos com classe Execução Fiscal (não inclui Embargos à Execução Fiscal). A cor roxa é aplicada apenas nas EFs sem advogado no polo passivo.">?</span></span>`+
+    (efSemAdvCount>0?` · <span style="color:#7B2D8E;font-weight:600">EF sem adv. passivo: ${efSemAdvCount}</span>`:''):'';
+  const tealLabel=tealCount>0?` · <span style="color:#00838F;font-weight:600">Polo ativo sem CNPJ: ${tealCount}</span>`:'';
+  const pinkLabel=pinkCount>0?` · <span style="color:#E91E63;font-weight:600">Polo passivo sem CNPJ: ${pinkCount}</span>`:'';
+  const brownLabel=brownCount>0?` · <span style="color:#6B3A2A;font-weight:600;background:#6B3A2A22;padding:0 4px;border-radius:3px">⚠ Impedimentos: ${brownCount}</span>`:'';
+  // Auto-mark migrado: CNJ starts with 0
+  let migradoCount=0;
+  S.filteredRows.forEach((row,i)=>{const cnj=String(row[cnjColIndex]||'').trim();if(cnj.startsWith('0')){migradoCount++;if(!S.rowColors[i])S.rowColors[i]='migrado'}});
+  const migradoLabel=migradoCount>0?` · <span style="color:#888;font-weight:600" title="Total de processos migrados (CNJ iniciado com 0). Alguns podem ter recebido outras cores prioritárias.">⬛ Migrados: ${migradoCount} <span style="cursor:help;font-size:.65rem;background:var(--surface2);border-radius:50%;padding:0 4px;border:1px solid var(--border)">?</span></span>`:'';
+  // Count sigilosos
+  let sigiloCount=0;
+  const sigilosEncontrados=[];
+  if(sigiloColIdx>=0){S.filteredRows.forEach((row,i)=>{const v=String(row[sigiloColIdx]||'').trim().toLowerCase();if(v&&v!=='não'&&v!=='nao'&&v!=='registro nulo'&&v!=='n'){sigiloCount++;const cnj=String(row[cnjColIndex]||'').trim();if(cnj)sigilosEncontrados.push(cnj);}});}
+  const sigiloLabel=sigiloCount>0?` · <span style="color:#FFD700;font-weight:600">🔒 Sigilosos: ${sigiloCount}</span>`:'';
+  q('.sala-stats',s).innerHTML=`Encontrados: <span>${S.filteredRows.length}</span> · Não encontrados: <span class="miss">${S.notFoundList.length}</span>`+redLabel+efLabel+tealLabel+pinkLabel+brownLabel+migradoLabel+sigiloLabel;
+  // Envio ao Teams — apenas sigilosos não enviados ainda
+  if(sigilosEncontrados.length>0&&TEAMS_WEBHOOK_URL){
+    enviarSigilososTeams(sigilosEncontrados,s);
+  }
+  const nfSec=document.querySelector(`.nf-section[data-sala="${s}"]`);
+  if(S.notFoundList.length>0){nfSec.style.display='block';q('.nf-toggle-btn',s).textContent=`${S.notFoundList.length} processo(s) não encontrado(s)`;document.querySelector(`.nf-list-div[data-sala="${s}"]`).innerHTML=S.notFoundList.join('<br>');document.querySelector(`.nf-list-div[data-sala="${s}"]`).style.display='none'}else{nfSec.style.display='none'}
+  document.querySelector(`.ct[data-sala="${s}"]`).classList.add('show');
+  q('.btn-clear-sala',s).disabled=false;
+  S.salaName=currentDateStr||('Sala '+(s+1));
+  renderTable(s);updateTabDot(s);updateExportBtn();updateColorCounters(s);autoSave(true);
+}
+
+// RENDER TABLE
+function renderTable(s){
+  const S=salas[s],cf=q('.cf',s).value;
+  const allR=[];
+  S.filteredRows.forEach((row,i)=>allR.push({row,idx:i,cnj:String(row[cnjColIndex]||''),nf:false}));
+  S.notFoundList.forEach((cnj,i)=>allR.push({row:null,idx:S.filteredRows.length+i,cnj,nf:true}));
+  let disp=cf==='all'?allR:cf==='none'?allR.filter(r=>!S.rowColors[r.idx]):allR.filter(r=>S.rowColors[r.idx]===cf);
+  // Column filters
+  const acf=S.colFilters||{};
+  Object.keys(acf).forEach(pos=>{const set=acf[pos];if(!set||set.size===0)return;const ci=visibleColIndices[+pos];disp=disp.filter(r=>{if(r.nf)return set.has('(vazio)');let v=r.row[ci]??'';if(v instanceof Date)v=v.toLocaleDateString('pt-BR');v=String(v).trim();return set.has(v===''?'(vazio)':v)})});
+  const head=document.querySelector(`.th[data-sala="${s}"]`),body=document.querySelector(`.tb[data-sala="${s}"]`);
+  let hh='<tr><th class="cb-col" style="white-space:normal;line-height:1.2;font-size:.55rem;text-align:center"><span style="display:block;margin-bottom:2px">Selecionar todos</span><input type="checkbox" class="cb-all" data-sala="'+s+'"></th><th style="width:4px"></th>';
+  visibleColIndices.forEach((ci,pos)=>{const act=acf[pos]&&acf[pos].size>0?' active':'';hh+=`<th>${allHeaders[ci]||''} <span class="col-filter-btn${act}" data-sala="${s}" data-col-pos="${pos}" title="Filtrar coluna">▼</span></th>`});
+  hh+='</tr>';head.innerHTML=hh;
+  body.innerHTML=disp.map(r=>{const c=S.rowColors[r.idx]||'';const cls=c?` class="row-${c}"`:'';let cells=`<td class="cb-col"><input type="checkbox" class="row-cb" data-sala="${s}" data-idx="${r.idx}"></td><td class="ci"${c?'':' style="border-left:4px solid transparent"'}></td>`;if(r.nf){cells+=visibleColIndices.map(i=>i===cnjColIndex?`<td class="cnj-col"><a class="cnj-link" href="#" data-cnj="${r.cnj}">${r.cnj}</a></td>`:'<td></td>').join('')}else{cells+=visibleColIndices.map(i=>{let v=r.row[i]??'';if(v instanceof Date)v=v.toLocaleDateString('pt-BR');if(i===cnjColIndex)return`<td class="cnj-col"><a class="cnj-link" href="#" data-cnj="${String(v)}">${v}</a></td>`;return`<td title="${String(v)}">${v}</td>`}).join('')}return`<tr${cls} data-idx="${r.idx}">${cells}</tr>`}).join('');
+  document.querySelector(`.tw[data-sala="${s}"]`).style.display='block';
+  updateSelCount(s);
+}
+
+// COLUMN FILTER DROPDOWN
+let cfdState={sala:-1,colPos:-1};
+function openColFilter(sala,colPos,anchor){
+  cfdState={sala,colPos};const S=salas[sala],ci=visibleColIndices[colPos],drop=$('colFilterDrop');
+  const vals=new Set();
+  S.filteredRows.forEach(row=>{let v=row[ci]??'';if(v instanceof Date)v=v.toLocaleDateString('pt-BR');v=String(v).trim();vals.add(v===''?'(vazio)':v)});
+  if(S.notFoundList.length>0)vals.add('(vazio)');
+  const sorted=[...vals].sort((a,b)=>a==='(vazio)'?-1:b==='(vazio)'?1:a.localeCompare(b,'pt-BR'));
+  const cur=S.colFilters[colPos],hasFilt=cur&&cur.size>0;
+  $('cfdList').innerHTML=sorted.map(v=>{const ck=hasFilt?cur.has(v):true;const esc=v.replace(/"/g,'&quot;').replace(/</g,'&lt;');return`<div class="cfd-item"><input type="checkbox" value="${esc}" ${ck?'checked':''}><label title="${esc}">${esc}</label></div>`}).join('');
+  $('cfdSelAll').checked=!hasFilt;$('cfdSearch').value='';
+  const rect=anchor.getBoundingClientRect();
+  const dropH=320; // max-height
+  const spaceBelow=window.innerHeight-rect.bottom-8;
+  const spaceAbove=rect.top-8;
+  drop.style.left=Math.min(rect.left,window.innerWidth-260)+'px';
+  if(spaceBelow>=dropH||spaceBelow>=spaceAbove){
+    drop.style.top=(rect.bottom+4)+'px';drop.style.bottom='auto';
+  }else{
+    drop.style.bottom=(window.innerHeight-rect.top+4)+'px';drop.style.top='auto';
+  }
+  drop.classList.add('show');
+}
+function closeColFilter(){const d=$('colFilterDrop');d.classList.remove('show');d.style.top='';d.style.bottom='';cfdState={sala:-1,colPos:-1}}
+
+document.addEventListener('click',e=>{
+  // Column filter item — click anywhere on the item toggles checkbox
+  const cfdItem=e.target.closest('.cfd-item');
+  if(cfdItem&&!e.target.matches('input')){const cb=cfdItem.querySelector('input');if(cb)cb.checked=!cb.checked}
+  const fb=e.target.closest('.col-filter-btn');
+  if(fb){e.stopPropagation();const s=+fb.dataset.sala,p=+fb.dataset.colPos;if(cfdState.sala===s&&cfdState.colPos===p){closeColFilter();return}openColFilter(s,p,fb);return}
+  if(!e.target.closest('.col-filter-drop')&&!e.target.closest('.col-filter-btn'))closeColFilter();
+});
+$('cfdSearch').addEventListener('input',e=>{const t=e.target.value.toLowerCase();document.querySelectorAll('#cfdList .cfd-item').forEach(it=>{it.style.display=it.querySelector('label').textContent.toLowerCase().includes(t)?'':'none'})});
+$('cfdSelAll').addEventListener('change',e=>{const ck=e.target.checked;document.querySelectorAll('#cfdList .cfd-item input').forEach(cb=>{if(cb.closest('.cfd-item').style.display!=='none')cb.checked=ck})});
+$('cfdApply').addEventListener('click',()=>{const{sala,colPos}=cfdState;if(sala<0)return;const S=salas[sala],checked=new Set();let tot=0,ckd=0;document.querySelectorAll('#cfdList .cfd-item').forEach(it=>{tot++;const cb=it.querySelector('input');if(cb.checked){ckd++;checked.add(cb.value)}});if(ckd>=tot)delete S.colFilters[colPos];else S.colFilters[colPos]=checked;closeColFilter();renderTable(sala);autoSave(true)});
+$('cfdClear').addEventListener('click',()=>{const{sala,colPos}=cfdState;if(sala<0)return;delete salas[sala].colFilters[colPos];closeColFilter();renderTable(sala);autoSave(true)});
+
+// DELEGATED EVENTS
+document.addEventListener('change',e=>{
+  if(e.target.classList.contains('cb-all')){const s=+e.target.dataset.sala;document.querySelectorAll(`.row-cb[data-sala="${s}"]`).forEach(cb=>{cb.checked=e.target.checked});updateSelCount(s)}
+  if(e.target.classList.contains('row-cb'))updateSelCount(+e.target.dataset.sala);
+  if(e.target.classList.contains('cf'))renderTable(+e.target.dataset.sala);
+});
+document.addEventListener('click',e=>{
+  const cb=e.target.closest('.cb');
+  if(cb&&!cb.classList.contains('locked')){const s=+cb.dataset.sala,color=cb.dataset.color;
+  const checked=document.querySelectorAll(`.row-cb[data-sala="${s}"]:checked`);
+  if(!checked.length)return;
+  checked.forEach(c=>{
+    const idx=+c.dataset.idx;
+    salas[s].rowColors[idx]=color==='none'?null:color;
+  });
+  renderTable(s);updateColorCounters(s);updateExportBtn();autoSave(true)}
+  if(e.target.classList.contains('nf-toggle-btn')){const s=+e.target.dataset.sala;const nl=document.querySelector(`.nf-list-div[data-sala="${s}"]`);nl.style.display=nl.style.display==='none'?'block':'none'}
+  if(e.target.classList.contains('nf-copy-btn')){const s=+e.target.dataset.sala;navigator.clipboard.writeText(salas[s].notFoundList.join('\n')).then(()=>{e.target.textContent='Copiado!';setTimeout(()=>{e.target.textContent='Copiar processos não encontrados no Excel'},1500)})}
+  if(e.target.classList.contains('btn-copy-cnjs')){const s=+e.target.dataset.sala,S=salas[s];const checked=document.querySelectorAll(`.row-cb[data-sala="${s}"]:checked`);if(!checked.length)return;const cnjs=[];checked.forEach(c=>{const idx=+c.dataset.idx;if(idx<S.filteredRows.length)cnjs.push(String(S.filteredRows[idx][cnjColIndex]||''));else{const ni=idx-S.filteredRows.length;if(S.notFoundList[ni])cnjs.push(S.notFoundList[ni])}});navigator.clipboard.writeText(cnjs.join('\n')).then(()=>{e.target.textContent=cnjs.length+' copiados!';setTimeout(()=>{e.target.textContent='Copiar processos selecionados'},2000)})}
+  const link=e.target.closest('.cnj-link');
+  if(link){e.preventDefault();const cnj=link.dataset.cnj;navigator.clipboard.writeText(cnj).then(()=>{link.classList.add('copied');setTimeout(()=>link.classList.remove('copied'),1500)});const url=getPjeUrl()+'#auto='+encodeURIComponent(cnj);if(pjeWindow&&!pjeWindow.closed){pjeWindow.location.href=url;pjeWindow.focus()}else{pjeWindow=window.open(url,'pje_consulta')}}
+  const clr=e.target.closest('.btn-clear-sala');
+  const ccf=e.target.closest('.btn-clear-col-filters');
+  if(ccf){return}
+  if(clr){clearSalaPending=+clr.dataset.sala;$('confirmClearSalaModal').classList.add('show')}
+});
+function updateSelCount(s){q('.sc',s).textContent=document.querySelectorAll(`.row-cb[data-sala="${s}"]:checked`).length+' sel.'}
+// CONCLUIR ANÁLISE — modal profissional
+const concludeOverlay=document.createElement('div');
+concludeOverlay.className='generic-overlay';
+concludeOverlay.id='concludeModal';
+concludeOverlay.innerHTML=`<div class="switch-box" style="width:480px;text-align:left">
+  <div id="concludeIcon" style="font-size:2rem;text-align:center">⚠️</div>
+  <h2 class="modal-title" id="concludeTitle" style="margin:.5rem 0 .8rem">Verificação de análise</h2>
+  <div id="concludeBody" style="font-size:.82rem;color:var(--text-dim);max-height:300px;overflow-y:auto;line-height:1.6"></div>
+  <div style="display:flex;justify-content:flex-end;margin-top:1.2rem">
+    <button class="btn-primary" id="concludeClose">Fechar</button>
+  </div>
+</div>`;
+document.body.appendChild(concludeOverlay);
+document.getElementById('concludeClose').addEventListener('click',()=>concludeOverlay.classList.remove('show'));
+concludeOverlay.addEventListener('click',e=>{if(e.target===concludeOverlay)concludeOverlay.classList.remove('show');});
+
+function runConcluirAnalise(){
+  const CORES_OK=new Set(['green','orange']);
+  const CORES_IGNORAR=new Set(['brown']); // impedimentos — não precisam de análise
+  let totalPendente=0;
+  const detalhes=[];
+  for(let s=0;s<NUM_SALAS;s++){
+    const S=salas[s];
+    if(S.filteredRows.length===0&&S.notFoundList.length===0)continue;
+    const nomeRelator=document.getElementById('labelRelator'+s)?.textContent||('Relator '+(s+1));
+    const pendentes=[];
+    S.filteredRows.forEach((row,i)=>{
+      const cor=S.rowColors[i];
+      if(!cor||(!CORES_OK.has(cor)&&!CORES_IGNORAR.has(cor))){
+        pendentes.push(String(row[cnjColIndex]||'Processo '+(i+1)).trim());
+      }
+    });
+    // Não encontrados — só pendente se não tiver cor manual (green/orange)
+    S.notFoundList.forEach((cnj,ni)=>{
+      const idxNF=S.filteredRows.length+ni;
+      const cor=S.rowColors[idxNF];
+      if(!cor||(!CORES_OK.has(cor)&&!CORES_IGNORAR.has(cor))){
+        pendentes.push(cnj+' ⚠ não encontrado na planilha');
+      }
+    });
+    if(pendentes.length>0){
+      totalPendente+=pendentes.length;
+      detalhes.push({nome:nomeRelator,lista:pendentes});
+    }
+  }
+  // Detectar CNJs duplicados entre abas diferentes
+  const cnjParaSalas={};
+  for(let s=0;s<NUM_SALAS;s++){
+    const S=salas[s];
+    if(S.filteredRows.length===0)continue;
+    const nomeRelator=salaWorkbooks[s].acervoDesName||('Relator '+(s+1));
+    S.filteredRows.forEach(row=>{
+      const cnj=String(row[cnjColIndex]||'').trim();
+      if(!cnj)return;
+      if(!cnjParaSalas[cnj])cnjParaSalas[cnj]=[];
+      cnjParaSalas[cnj].push(nomeRelator);
+    });
+  }
+  const duplicatas=Object.entries(cnjParaSalas).filter(([,salas])=>salas.length>1);
+
+  const icon=$('concludeIcon'),title=$('concludeTitle'),body=$('concludeBody');
+  const totalProcessos=salas.reduce((a,s)=>a+s.filteredRows.length+s.notFoundList.length,0);
+  const relatoresAtivos=salas.filter(s=>s.filteredRows.length>0||s.notFoundList.length>0).length;
+  const dateLabel=currentDateStr||'data não informada';
+  const turmaLabel=TURMAS_LABEL[currentTurma]||('Turma '+currentTurma);
+
+  // Se há duplicatas, avisar primeiro independente do status de análise
+  if(duplicatas.length>0){
+    icon.textContent='⚠️';
+    title.textContent=`${duplicatas.length} processo(s) encontrado(s) em mais de uma aba`;
+    body.innerHTML=`<p style="color:var(--text);margin-bottom:.8rem">Os processos abaixo estão presentes em múltiplas abas. Verifique se a lista foi colada corretamente.</p>`+
+      duplicatas.slice(0,20).map(([cnj,salas])=>
+        `<div style="font-family:'JetBrains Mono',monospace;font-size:.75rem;padding:.25rem 0;border-bottom:1px solid var(--border)">
+          <b>${cnj}</b><br>
+          <span style="color:var(--text-dim);font-size:.7rem">${salas.join(' · ')}</span>
+        </div>`
+      ).join('')+
+      (duplicatas.length>20?`<div style="font-size:.72rem;color:var(--text-dim);margin-top:.4rem">...e mais ${duplicatas.length-20} duplicata(s)</div>`:'');
+    concludeOverlay.classList.add('show');
+    return; // não prosseguir para verificação de pendências enquanto houver duplicatas
+  }
+  if(totalPendente===0){
+    icon.textContent='✅';
+    title.textContent='Análise concluída com sucesso';
+    body.innerHTML=`<p style="color:var(--text)">
+      <b>${totalProcessos} processo(s)</b> analisados em <b>${relatoresAtivos} relator(es)</b> na sessão de <b>${dateLabel}</b> — ${turmaLabel}.<br><br>
+      Todos os processos foram devidamente classificados. Você pode prosseguir com a exportação.
+    </p>`;
+  } else {
+    icon.textContent='⚠️';
+    title.textContent=`Análise incompleta — ${totalPendente} processo(s) pendente(s)`;
+    body.innerHTML=detalhes.map(d=>`
+      <div style="margin-bottom:.8rem">
+        <div style="font-weight:700;color:var(--text);margin-bottom:.3rem">${d.nome}</div>
+        ${d.lista.slice(0,15).map(p=>`<div style="font-family:'JetBrains Mono',monospace;font-size:.75rem;padding:.15rem 0;border-bottom:1px solid var(--border)">${p}</div>`).join('')}
+        ${d.lista.length>15?`<div style="font-size:.72rem;color:var(--text-dim);margin-top:.3rem">...e mais ${d.lista.length-15} processo(s)</div>`:''}
+      </div>`).join('');
+  }
+  concludeOverlay.classList.add('show');
+
+  // Enviar telemetria real ao Apps Script
+  if(TELEMETRIA_URL){
+    // Consolidar dados de todas as salas
+    let qtdAnalisados=0,qtdEF=0,qtdMigrados=0,qtdSigilosos=0,qtdPoloAtivoSemAdv=0,qtdSemCnpj=0;
+    const listaSigilosos=[];
+    const relatoresAtivos=[];
+    for(let s=0;s<NUM_SALAS;s++){
+      const S=salas[s];
+      if(S.filteredRows.length===0&&S.notFoundList.length===0)continue;
+      qtdAnalisados+=S.filteredRows.length+S.notFoundList.length;
+      const sw=salaWorkbooks[s];
+      if(sw.acervoDesName)relatoresAtivos.push(sw.acervoDesName);
+      // Contar por características da planilha
+      const efColIdx=allHeaders.findIndex(h=>/classe.*proc.*origem.*cnj/i.test(h));
+      const advIdx=sw.advColIdx>=0?sw.advColIdx:-1;
+      const cpfAtivoIdx=sw.allHeaders.findIndex(h=>/cpf.*cnpj.*polo\s*ativo/i.test(h));
+      const sigiloIdx=sw.sigiloColIdx>=0?sw.sigiloColIdx:-1;
+      S.filteredRows.forEach(row=>{
+        const cl=String(efColIdx>=0?row[efColIdx]||'':'').trim().toLowerCase();
+        if(cl==='execução fiscal'||cl==='execucao fiscal')qtdEF++;
+        const cnj=String(row[sw.cnjColIndex]||'').trim();
+        if(cnj.startsWith('0'))qtdMigrados++;
+        const adv=String(advIdx>=0?row[advIdx]||'':'').trim().toLowerCase();
+        if(adv===''||adv==='registro nulo')qtdPoloAtivoSemAdv++;
+        const cpf=String(cpfAtivoIdx>=0?row[cpfAtivoIdx]||'':'').trim().toLowerCase();
+        if(cpf===''||cpf==='registro nulo')qtdSemCnpj++;
+        if(sigiloIdx>=0){const sig=String(row[sigiloIdx]||'').trim().toLowerCase();if(sig&&sig!=='não'&&sig!=='nao'&&sig!=='registro nulo'&&sig!=='n')listaSigilosos.push(cnj);}
+      });
+    }
+    const payload={
+      token:TELEMETRIA_SECRET_TOKEN,
+      usuario:window._userName||'desconhecido',
+      turma:TURMAS_LABEL[currentTurma]||('Turma '+currentTurma),
+      dataSessao:currentDateStr||'não informada',
+      relatores:relatoresAtivos.join(', ')||'não informado',
+      qtdAnalisados,qtdEF,qtdMigrados,qtdSigilosos:listaSigilosos.length,
+      qtdPoloAtivoSemAdv,qtdSemCnpj,listaSigilosos
+    };
+    fetch(TELEMETRIA_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+      .catch(e=>console.warn('Telemetria erro:',e));
+  }
+}
+
+$('btnConcluirGlobal').addEventListener('click',runConcluirAnalise);
+
+function updateExportBtn(){
+  const has=salas.some(s=>s.filteredRows.length>0||s.notFoundList.length>0);
+  $('btnExportAll').disabled=!has;
+  const bc=$('btnConcluirGlobal');
+  bc.disabled=!has;bc.style.opacity=has?'1':'.4';bc.style.cursor=has?'pointer':'not-allowed';
+  const total=salas.reduce((a,s)=>a+s.filteredRows.length+s.notFoundList.length,0);
+  const nrel=salas.filter(s=>s.filteredRows.length>0||s.notFoundList.length>0).length;
+  const dLabel=currentDateStr?` · ${currentDateStr}`:'';
+  const tLabel=currentTurma?` · ${TURMAS_LABEL[currentTurma]||'Turma '+currentTurma}`:'';
+  $('globalStats').textContent=has?`${total} processo(s) · ${nrel} relator(es)${dLabel}${tLabel}`:'';
+  // Painel verde de confirmação
+  const ca=$('confirmacaoAnalise');
+  if(has&&currentDateStr){
+    const dateLabel=currentDateStr;
+    const turmaLabel=TURMAS_LABEL[currentTurma]||('Turma '+currentTurma);
+    ca.textContent=`Ao clicar em concluir análise você estará confirmando a análise de ${total} processo(s) de ${nrel} relator(es) da Pauta de ${dateLabel} — ${turmaLabel}`;
+    ca.style.display='block';
+  } else {
+    ca.style.display='none';
+  }
+}
+
+// Direct handler for "Limpar filtros" buttons
+document.querySelectorAll('.btn-clear-col-filters').forEach(btn=>{
+  btn.addEventListener('click',e=>{
+    e.stopPropagation();
+    const s=+btn.dataset.sala;
+    salas[s].colFilters={};
+    q('.cf',s).value='all';
+    renderTable(s);
+    autoSave(true);
+  });
+});
+
+// EXPORT
+$('btnExportAll').addEventListener('click',()=>{
+  const _ew=salaWorkbooks[activeSala]||salaWorkbooks[0];const wb=XLSX.utils.book_new(),srcWs=(_ew.workbook||{Sheets:{},SheetNames:[]})["Sheets"]?.[(_ew.workbook||{SheetNames:[null]})["SheetNames"]?.[0]]||{},range=XLSX.utils.decode_range(srcWs['!ref']),maxCol=range.e.c;
+  const COLOR_MAP={green:{rgb:"00B050"},yellow:{rgb:"FFFF00"},orange:{rgb:"003366"},red:{rgb:"FF0000"},purple:{rgb:"7B2D8E"},teal:{rgb:"00838F"},pink:{rgb:"E91E63"},brown:{rgb:"6B3A2A"},migrado:{rgb:"444444"}};
+  const DARK_COLORS=new Set(['purple','teal','pink','brown','orange','migrado']);
+  const hs={fill:{fgColor:{rgb:"BDD7EE"}},font:{bold:true,sz:10},border:{top:{style:"thin",color:{rgb:"000000"}},bottom:{style:"thin",color:{rgb:"000000"}},left:{style:"thin",color:{rgb:"000000"}},right:{style:"thin",color:{rgb:"000000"}}}};
+  function cc(sr,dr,ws){for(let c=0;c<=maxCol;c++){const sa=XLSX.utils.encode_cell({r:sr,c}),da=XLSX.utils.encode_cell({r:dr,c});if(srcWs[sa])ws[da]=JSON.parse(JSON.stringify(srcWs[sa]))}}
+  for(let s=0;s<NUM_SALAS;s++){const S=salas[s];if(S.filteredRows.length===0&&S.notFoundList.length===0)continue;const sn=(S.salaName||('Sala '+(s+1))).replace(/[\\\/\*\[\]:?]/g,'-').substring(0,31),ws={};
+    cc(headerRowIdx,0,ws);for(let c=0;c<=maxCol;c++){const a=XLSX.utils.encode_cell({r:0,c});if(ws[a])ws[a].s=hs}
+    S.filteredRowIndices.forEach((sr,i)=>{cc(sr,i+1,ws);const color=S.rowColors[i];if(color&&COLOR_MAP[color]){const st={fill:{fgColor:COLOR_MAP[color]},font:{sz:10,color:{rgb:DARK_COLORS.has(color)?"FFFFFF":"000000"},bold:true}};const ca=XLSX.utils.encode_cell({r:i+1,c:cnjColIndex});if(ws[ca])ws[ca].s=st;if(color==='red'&&advColIdx>=0){const aa=XLSX.utils.encode_cell({r:i+1,c:advColIdx});if(ws[aa])ws[aa].s=st;else ws[aa]={v:'Registro nulo',t:'s',s:st}}}});
+    const nfs=S.filteredRowIndices.length+1,nst={fill:{fgColor:{rgb:"FFFF00"}},font:{sz:10,bold:true}};
+    S.notFoundList.forEach((cnj,i)=>{ws[XLSX.utils.encode_cell({r:nfs+i,c:cnjColIndex})]={v:cnj,t:'s',s:nst}});
+    const tot=S.filteredRowIndices.length+S.notFoundList.length;
+    ws['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:tot,c:maxCol}});
+    if(srcWs['!cols'])ws['!cols']=JSON.parse(JSON.stringify(srcWs['!cols']));
+    XLSX.utils.book_append_sheet(wb,ws,sn);
+  }
+  const lw={},brd={top:{style:"thin",color:{rgb:"000000"}},bottom:{style:"thin",color:{rgb:"000000"}},left:{style:"thin",color:{rgb:"000000"}},right:{style:"thin",color:{rgb:"000000"}}},lh={font:{bold:true,sz:11},fill:{fgColor:{rgb:"BDD7EE"}}};
+  lw['A1']={v:'COR',t:'s',s:{...lh,border:brd}};lw['B1']={v:'SIGNIFICADO',t:'s',s:{...lh,border:brd}};
+  [{rgb:"00B050",f:"FFFFFF",l:"ANALISADO OK"},{rgb:"FFFF00",f:"000000",l:"NÃO LOCALIZADOS NO E-SIEST"},{rgb:"003366",f:"FFFFFF",l:"ADVOGADO ALTERADO"},{rgb:"FF0000",f:"000000",l:"NÃO TEM ADVOGADO NO POLO ATIVO"},{rgb:"7B2D8E",f:"FFFFFF",l:"EXECUÇÃO FISCAL"},{rgb:"00838F",f:"FFFFFF",l:"POLO ATIVO SEM CNPJ"},{rgb:"E91E63",f:"FFFFFF",l:"POLO PASSIVO SEM CNPJ"},{rgb:"6B3A2A",f:"FFFFFF",l:"IMPEDIMENTO / SUSPEIÇÃO — MAGISTRADO NA ORIGEM"},{rgb:"444444",f:"FFFFFF",l:"MIGRADO (PROCESSO INICIADO COM 0)"}].forEach((it,i)=>{const r=i+1;lw[XLSX.utils.encode_cell({r,c:0})]={v:'',t:'s',s:{fill:{fgColor:{rgb:it.rgb}},border:brd}};lw[XLSX.utils.encode_cell({r,c:1})]={v:it.l,t:'s',s:{fill:{fgColor:{rgb:it.rgb}},font:{sz:10,color:{rgb:it.f},bold:true},border:brd}}});
+  lw['!ref']='A1:B10';lw['!cols']=[{wch:12},{wch:50}];
+  XLSX.utils.book_append_sheet(wb,lw,'Legenda de Cores');
+  try{
+    const hoje=new Date();const hojeBR=hoje.toLocaleDateString('pt-BR');
+    const dateSessao=(currentDateStr||hojeBR).replace(/\//g,'-');
+    const desNome=acervoDesName?acervoDesName.replace(/[^a-zA-ZÀ-ÿ0-9 _-]/g,'').trim():'';
+    const nomeArq=(desNome?desNome+'_':'')+dateSessao||'Conferencia_de_Pauta';
+    XLSX.writeFile(wb,nomeArq+'.xlsx');
+  }catch(err){
+    console.warn('Erro no nome do arquivo, usando fallback:',err);
+    XLSX.writeFile(wb,'Conferencia_de_Pauta_'+new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')+'.xlsx');
+  }
+});
+
+// ─── WEBHOOK TEAMS — SIGILOSOS ───────────────────────────
+function getSigiloSentSet(){
+  try{return new Set(JSON.parse(localStorage.getItem(SIGILO_SENT_KEY)||'[]'));}catch(e){return new Set();}
+}
+function saveSigiloSentSet(set){
+  localStorage.setItem(SIGILO_SENT_KEY,JSON.stringify([...set]));
+}
+// Chave composta CNJ|data: mesmo processo em data diferente é tratado como novo envio
+function sigiloSentKey(cnj){return cnj+'|'+(currentDateStr||'sem-data');}
+
+async function enviarSigilososTeams(cnjs,sala){
+  if(!TEAMS_WEBHOOK_URL)return;
+  const sent=getSigiloSentSet();
+  const novos=cnjs.filter(c=>!sent.has(sigiloSentKey(c)));
+  if(novos.length===0)return; // todos já foram enviados nesta data
+  const turmaLabel=TURMAS_LABEL[currentTurma]||('Turma '+currentTurma);
+  const dateLabel=currentDateStr||'data não informada';
+  const relatLabel=salaWorkbooks[sala].acervoDesName||('Relator '+(sala+1));
+  const lista=novos.map(c=>`• ${c}`).join('\n');
+  const body={
+    // Token de autenticação — validado pelo Apps Script antes de repassar ao Teams
+    token: TEAMS_SECRET_TOKEN,
+    "@type":"MessageCard",
+    "@context":"http://schema.org/extensions",
+    "themeColor":"FFD700",
+    "summary":"Processos Sigilosos — "+turmaLabel,
+    "sections":[{
+      "activityTitle":"🔒 Lista de Processos Sigilosos — "+turmaLabel+" | "+relatLabel,
+      "activitySubtitle":"Sessão: "+dateLabel+" | Enviado por: "+(window._userName||'Usuário')+" | "+novos.length+" processo(s) novo(s)",
+      "text":lista.replace(/\n/g,'<br>'),
+      "markdown":true
+    }]
+  };
+  try{
+    const res=await fetch(TEAMS_WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(res.ok||res.status===200){
+      novos.forEach(c=>sent.add(sigiloSentKey(c)));
+      saveSigiloSentSet(sent);
+      const ind=$('saveIndicator');
+      ind.textContent=`✓ ${novos.length} processo(s) sigiloso(s) enviado(s) ao canal Teams com sucesso`;
+      ind.classList.add('show');ind.style.background='#c0392b';
+      setTimeout(()=>{ind.classList.remove('show');ind.style.background='';},4000);
+    }
+  }catch(err){console.warn('Teams webhook erro:',err);}
+}
+
+// Alerta vermelho só aparece se webhook configurado mas sem token (configuração incompleta)
+if(TEAMS_WEBHOOK_URL&&!TEAMS_SECRET_TOKEN){
+  const ta=document.getElementById('teamsAlert');
+  if(ta){ta.textContent='⚠ Token do webhook não configurado';ta.style.display='inline';}
+}
+
+// PERSISTENCE — SESSION BASED
+const DB_NAME='ConfPautaDB',DB_STORE='files';
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,2);r.onupgradeneeded=e=>{const db=e.target.result;if(!db.objectStoreNames.contains(DB_STORE))db.createObjectStore(DB_STORE)};r.onsuccess=e=>res(e.target.result);r.onerror=e=>rej(e)})}
+// Salva planilha de uma sala específica: chave 'excel_0', 'excel_1', etc.
+async function saveExcelToDB(ab,fn,s){
+  const key='excel_'+(s||0);
+  const db=await openDB();const arr=new Uint8Array(ab);
+  return new Promise((res,rej)=>{const tx=db.transaction(DB_STORE,'readwrite');tx.objectStore(DB_STORE).put({data:arr,name:fn},key);tx.oncomplete=()=>res();tx.onerror=e=>rej(e)})
+}
+// Carrega planilha de uma sala específica
+async function loadExcelFromDB(s){
+  const key='excel_'+(s||0);
+  const db=await openDB();
+  return new Promise((res,rej)=>{const tx=db.transaction(DB_STORE,'readonly');const r=tx.objectStore(DB_STORE).get(key);r.onsuccess=()=>{const result=r.result;if(result&&result.data&&result.data instanceof Uint8Array)result.data=result.data.buffer;res(result||null)};r.onerror=e=>rej(e)})
+}
+
+function buildCurrentState(){
+  const cf_map=salas.map((s,i)=>{const cf={};if(s.colFilters)Object.entries(s.colFilters).forEach(([k,v])=>{if(v&&typeof v[Symbol.iterator]==='function')cf[k]=[...v]});return{salaName:s.salaName,cnjText:q('.cnj-input',i)?q('.cnj-input',i).value:'',rowColors:s.rowColors,notFoundList:s.notFoundList,hasData:s.filteredRows.length>0||s.notFoundList.length>0,colFilters:cf}});
+  return{salas:cf_map,activeSala};
+}
+
+let saveTimer=null;
+function autoSave(immediate){
+  clearTimeout(saveTimer);
+  const doSave=()=>{
+    try{
+      if(!currentTurma||!currentDateStr)return;
+      const state=buildCurrentState();
+      localStorage.setItem(sessionKey(currentTurma,currentDateStr),JSON.stringify(state));
+      const ind=$('saveIndicator');ind.textContent='✓ Salvo';ind.classList.add('show');setTimeout(()=>ind.classList.remove('show'),2000);
+    }catch(e){console.warn('autoSave erro:',e)}
+  };
+  if(immediate)doSave();else saveTimer=setTimeout(doSave,300);
+}
+
+function resetSalasUI(){
+  for(let i=0;i<NUM_SALAS;i++){
+    // Reset de sessão — zera estado completo da sala
+    const S=salas[i];S.filteredRows=[];S.filteredRowIndices=[];S.rowColors={};S.notFoundList=[];S.colFilters={};S.salaName='';
+    const ta=q('.cnj-input',i);if(ta)ta.value='';
+    q('.cnj-count',i).textContent='\u2014';
+    const di=document.querySelector(`.dup-info[data-sala="${i}"]`);if(di)di.innerHTML='';
+    q('.sala-stats',i).innerHTML='';
+    const nf=document.querySelector(`.nf-section[data-sala="${i}"]`);if(nf)nf.style.display='none';
+    const ct=document.querySelector(`.ct[data-sala="${i}"]`);if(ct)ct.classList.remove('show');
+    const tw=document.querySelector(`.tw[data-sala="${i}"]`);if(tw)tw.style.display='none';
+    const bcs=q('.btn-clear-sala',i);if(bcs)bcs.disabled=true;
+    q('.btn-filter',i).disabled=true;
+  }
+  activeSala=0;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',+b.dataset.sala===0));
+  document.querySelectorAll('.sala-panel').forEach(p=>p.classList.toggle('active',p.id==='sala0'));
+  updateTextareaLock();updateSessionDateDisplay();
+}
+
+function loadSessionData(turma,dateStr){
+  resetSalasUI();
+  currentTurma=turma;currentDateStr=dateStr;
+  try{
+    const raw=localStorage.getItem(sessionKey(turma,dateStr));
+    if(!raw)return;
+    const state=JSON.parse(raw);
+    if(typeof state.activeSala==='number'){activeSala=state.activeSala;document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',+b.dataset.sala===activeSala));document.querySelectorAll('.sala-panel').forEach(p=>p.classList.toggle('active',p.id==='sala'+activeSala))}
+    if(state.salas){state.salas.forEach((ss,i)=>{
+      if(ss.salaName)salas[i].salaName=ss.salaName;
+      if(ss.cnjText){q('.cnj-input',i).value=ss.cnjText;q('.cnj-count',i).textContent=extractCNJs(ss.cnjText).length||'\u2014'}
+      if(ss.hasData&&ss.cnjText&&salaWorkbooks[i].workbook){
+        q('.btn-filter',i).disabled=false;filterSala(i);
+        if(ss.rowColors){Object.keys(ss.rowColors).forEach(k=>{if(ss.rowColors[k]!==null)salas[i].rowColors[+k]=ss.rowColors[k]})}
+        // rowColors por índice restaurado — será preservado pelo merge no próximo filtro
+        if(ss.colFilters){Object.entries(ss.colFilters).forEach(([k,v])=>{if(Array.isArray(v)&&v.length>0)salas[i].colFilters[+k]=new Set(v)})}
+        renderTable(i);updateColorCounters(i);
+      }
+      // Atualizar label do relator se a planilha já estiver carregada
+      const sw=salaWorkbooks[i];
+      if(sw.acervoDesName){
+        const lr=document.getElementById('labelRelator'+i);
+        if(lr)lr.textContent='Lista de processos — '+sw.acervoDesName;
+      }
+    });}
+  }catch(e){console.warn('loadSessionData:',e)}
+  updateExportBtn();updateAllFilterBtns();updateTextareaLock();updateSessionDateDisplay();
+}
+
+// SESSION MANAGER UI
+function renderSessionChips(){
+  const chips=$('sessionChips');chips.innerHTML='';
+  if(!currentTurma)return;
+  const dates=getSessionIndex(currentTurma);
+  const obs=$('obsEditDate');
+  if(obs)obs.style.display=dates.length>0?'block':'none';
+  dates.forEach(d=>{
+    const chip=document.createElement('span');
+    chip.className='session-chip'+(d===currentDateStr?' active':'');
+    chip.textContent=d;
+    chip.title='Clique para selecionar • Botão direito para editar';
+    chip.addEventListener('click',()=>{if(d===currentDateStr)return;requestSessionSwitch(d);});
+    chip.addEventListener('contextmenu',e=>{
+      e.preventDefault();
+      window._editingDateStr=d;
+      $('editDateOriginal').textContent=d;
+      $('editDateInput').value=d;
+      $('editDateError').textContent='';
+      $('editDateModal').classList.add('show');
+      setTimeout(()=>{$('editDateInput').select();},80);
+    });
+    chips.appendChild(chip);
+  });
+}
+
+// EDIT DATE MODAL
+$('editDateInput').addEventListener('input',e=>{
+  const inp=e.target;
+  inp.value=applyDateMaskFull(inp.value);
+});
+$('editDateInput').addEventListener('keydown',e=>{
+  if(e.key.toLowerCase()==='a'&&e.target.value.length===10&&!e.target.value.includes(' a ')){e.preventDefault();e.target.value=e.target.value+' a ';}
+  if(e.key==='Enter')$('editDateConfirmBtn').click();
+  if(e.key==='Escape')$('editDateCancelBtn').click();
+});
+$('editDateConfirmBtn').addEventListener('click',()=>{
+  const oldDate=window._editingDateStr;
+  const newDate=$('editDateInput').value.trim();
+  $('editDateError').textContent='';
+  if(!newDate||!/^\d{2}\/\d{2}\/\d{4}/.test(newDate)){$('editDateError').textContent='Formato inválido. Use dd/mm/aaaaaa.';return;}
+  if(newDate===oldDate){$('editDateModal').classList.remove('show');return;}
+  const index=getSessionIndex(currentTurma);
+  if(index.includes(newDate)){$('editDateError').textContent='Esta data já existe.';return;}
+  // Renomear: copiar dados da chave antiga para nova, remover antiga
+  const oldKey=sessionKey(currentTurma,oldDate);
+  const newKey=sessionKey(currentTurma,newDate);
+  const raw=localStorage.getItem(oldKey);
+  if(raw){
+    try{const sd=JSON.parse(raw);if(sd.salas)sd.salas.forEach(s=>{if(s.salaName===oldDate)s.salaName=newDate;});localStorage.setItem(newKey,JSON.stringify(sd));}catch(e){localStorage.setItem(newKey,raw);}
+    localStorage.removeItem(oldKey);
+  }
+  const newIndex=index.map(d=>d===oldDate?newDate:d);
+  saveSessionIndex(currentTurma,newIndex);
+  if(currentDateStr===oldDate){
+    currentDateStr=newDate;
+    localStorage.setItem('conf_pauta_lastdate_'+currentTurma,newDate);
+    updateSessionDateDisplay();
+  }
+  $('editDateModal').classList.remove('show');
+  renderSessionChips();
+  autoSave(true);
+  const ind=$('saveIndicator');ind.textContent='✓ Data alterada';ind.classList.add('show');setTimeout(()=>ind.classList.remove('show'),2500);
+});
+$('editDateCancelBtn').addEventListener('click',()=>{$('editDateModal').classList.remove('show');window._editingDateStr=null;});
+$('editDateModal').addEventListener('click',e=>{if(e.target===$('editDateModal')){$('editDateModal').classList.remove('show');window._editingDateStr=null;}});
+
+let _pendingDateStr=null;
+
+function addDateSession(rawInput){
+  if(!currentTurma){alert('Selecione uma turma primeiro.');return;}
+  const dateStr=rawInput.trim();if(!dateStr)return;
+  if(!/^\d{2}\/\d{2}\/\d{4}/.test(dateStr)){showSessionError('Formato inválido. Use dd/mm/aaaaaa.');return;}
+  const index=getSessionIndex(currentTurma);
+  if(index.includes(dateStr)){
+    showSessionError('Esta data já existe. Clique na data para selecioná-la.');
+    document.querySelectorAll('.session-chip').forEach(c=>{if(c.textContent===dateStr){c.style.boxShadow='0 0 0 2px var(--accent)';setTimeout(()=>c.style.boxShadow='',2500);}});
+    return;
+  }
+  // Mostrar modal de confirmação
+  _pendingDateStr=dateStr;
+  $('confirmDateValue').textContent=dateStr;
+  $('confirmDateModal').classList.add('show');
+}
+
+function commitDateSession(dateStr){
+  const index=getSessionIndex(currentTurma);
+  index.push(dateStr);saveSessionIndex(currentTurma,index);
+  autoSave(true);
+  currentDateStr=dateStr;
+  renderSessionChips();
+  $('sessionDateInput').value='';clearSessionError();
+  loadSessionData(currentTurma,dateStr);
+  localStorage.setItem('conf_pauta_lastdate_'+currentTurma,dateStr);
+  const ind=$('saveIndicator');ind.textContent='✓ Nova sessão criada';ind.classList.add('show');setTimeout(()=>ind.classList.remove('show'),2500);
+}
+
+$('confirmDateYesBtn').addEventListener('click',()=>{
+  $('confirmDateModal').classList.remove('show');
+  if(_pendingDateStr)commitDateSession(_pendingDateStr);
+  _pendingDateStr=null;
+});
+$('confirmDateNoBtn').addEventListener('click',()=>{
+  $('confirmDateModal').classList.remove('show');
+  _pendingDateStr=null;
+  setTimeout(()=>$('sessionDateInput').focus(),100);
+});
+// Enter confirma, Escape cancela no modal de confirmação de data
+$('confirmDateModal').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){$('confirmDateYesBtn').click();}
+  if(e.key==='Escape'){$('confirmDateNoBtn').click();}
+});
+
+$('sessionDateInput').addEventListener('input',e=>{
+  const inp=e.target;
+  inp.value=applyDateMaskFull(inp.value);
+});
+$('sessionDateInput').addEventListener('keydown',e=>{
+  const inp=e.target;
+  if(e.key.toLowerCase()==='a'&&inp.value.length===10&&!inp.value.includes(' a ')){e.preventDefault();inp.value=inp.value+' a ';}
+  if(e.key==='Enter')$('btnAddSession').click();
+});
+$('btnAddSession').addEventListener('click',()=>{addDateSession($('sessionDateInput').value);});
+
+function applyDateMaskRaw(v){
+  let d=v.replace(/\D/g,'');
+  if(d.length>8)d=d.slice(0,8);
+  if(d.length>4)return d.slice(0,2)+'/'+d.slice(2,4)+'/'+d.slice(4);
+  if(d.length>2)return d.slice(0,2)+'/'+d.slice(2);
+  return d;
+}
+function applyDateMaskFull(raw){
+  const aIdx=raw.indexOf(' a ');
+  if(aIdx>=0){
+    const start=raw.slice(0,aIdx);
+    const end=raw.slice(aIdx+3);
+    return applyDateMaskRaw(start)+' a '+applyDateMaskRaw(end);
+  }
+  return applyDateMaskRaw(raw);
+}
+function showSessionError(msg){let el=$('sessionError');if(!el){el=document.createElement('span');el.id='sessionError';el.style.cssText='font-size:.72rem;color:var(--red);margin-left:.5rem;display:block;margin-top:.3rem';$('sessionArea').appendChild(el);}el.textContent=msg;}
+function clearSessionError(){const el=$('sessionError');if(el)el.textContent='';}
+
+function hasCurrentSessionData(){return salas.some((s,i)=>{const ta=q('.cnj-input',i);return(ta&&ta.value.trim())||s.filteredRows.length>0;});}
+
+function requestSessionSwitch(newDateStr,turmaOverride){
+  const doSwitch=()=>{
+    autoSave(true);
+    if(turmaOverride&&turmaOverride!==currentTurma){
+      currentTurma=turmaOverride;
+      localStorage.setItem(TURMA_KEY,currentTurma);
+      $('turmaBadge').textContent=TURMAS_LABEL[currentTurma]||('Turma '+currentTurma);
+    }
+    if(newDateStr){
+      currentDateStr=newDateStr;
+      loadSessionData(currentTurma,currentDateStr);
+      renderSessionChips();
+      localStorage.setItem('conf_pauta_lastdate_'+currentTurma,currentDateStr);
+    } else {
+      // Apenas troca de turma sem data definida
+      const idx=getSessionIndex(currentTurma);
+      const last=localStorage.getItem('conf_pauta_lastdate_'+currentTurma)||(idx.length?idx[idx.length-1]:null);
+      renderSessionChips();
+      if(last&&idx.includes(last)){currentDateStr=last;loadSessionData(currentTurma,last);}
+      else{currentDateStr=null;resetSalasUI();}
+    }
+    updateExportBtn();
+  };
+  if(hasCurrentSessionData()){
+    pendingSwitchCallback=doSwitch;
+    $('switchModalTitle').textContent=turmaOverride?'Trocar de Turma':'Trocar de Data';
+    $('switchModalMsg').textContent='Deseja salvar a an\u00e1lise atual antes de trocar de '+(turmaOverride?'turma':'data')+'?';
+    $('switchSessionModal').classList.add('show');
+  } else {doSwitch();}
+}
+
+$('switchSaveBtn').addEventListener('click',()=>{$('switchSessionModal').classList.remove('show');if(pendingSwitchCallback)pendingSwitchCallback();pendingSwitchCallback=null;});
+$('switchNoSaveBtn').addEventListener('click',()=>{$('switchSessionModal').classList.remove('show');if(pendingSwitchCallback)pendingSwitchCallback();pendingSwitchCallback=null;});
+$('switchCancelBtn').addEventListener('click',()=>{$('switchSessionModal').classList.remove('show');pendingSwitchCallback=null;});
+
+$('turmaBadge').addEventListener('click',()=>{const sel=$('changeTurmaSelect');sel.value=currentTurma||'';$('changeTurmaModal').classList.add('show');});
+$('changeTurmaCancelBtn').addEventListener('click',()=>{$('changeTurmaModal').classList.remove('show');});
+$('changeTurmaConfirmBtn').addEventListener('click',()=>{
+  const v=+$('changeTurmaSelect').value;if(!v){alert('Selecione uma turma.');return;}
+  if(v===currentTurma){$('changeTurmaModal').classList.remove('show');return;}
+  const nomeNova=TURMAS_LABEL[v]||('Turma '+v);
+  const nomeAtual=TURMAS_LABEL[currentTurma]||('Turma '+currentTurma);
+  $('changeTurmaModal').classList.remove('show');
+  // Popup de confirmação dedicado para troca de turma
+  $('trocaTurmaMsg').innerHTML=`Você está trocando da <b>${nomeAtual}</b> para a <b>${nomeNova}</b>.<br>Deseja salvar a análise atual antes de trocar?`;
+  window._pendingTurmaSwitch=v;
+  $('trocaTurmaModal').classList.add('show');
+});
+
+$('btnHelp').addEventListener('click',()=>{$('helpModal').classList.add('show');});
+$('helpClose').addEventListener('click',()=>{$('helpModal').classList.remove('show');});
+
+// ── BOTÃO T — Teste de telemetria ──
+$('btnTestTelemetria').addEventListener('click',async()=>{
+  const payload={
+    token:TELEMETRIA_SECRET_TOKEN,
+    tipo:'TESTE',
+    usuario:window._userName||'desconhecido',
+    turma:TURMAS_LABEL[currentTurma]||'não definida',
+    dataSessao:currentDateStr||'não definida',
+    mensagem:'Mensagem de teste da Conferência de Pauta — '+new Date().toLocaleString('pt-BR'),
+    qtdAnalisados:0,qtdEF:0,qtdMigrados:0,qtdSigilosos:0,qtdPoloAtivoSemAdv:0,qtdSemCnpj:0,
+    relatores:'TESTE',listaSigilosos:[]
+  };
+  const ind=$('saveIndicator');
+  ind.textContent='Enviando teste de telemetria...';ind.classList.add('show');
+  try{
+    await fetch(TELEMETRIA_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    ind.textContent='✓ Teste de telemetria enviado — verifique a planilha Google';
+    ind.style.background='#1a6b3a';
+  }catch(e){
+    ind.textContent='✗ Erro ao enviar teste de telemetria: '+e.message;
+    ind.style.background='#c0392b';
+  }
+  ind.classList.add('show');setTimeout(()=>{ind.classList.remove('show');ind.style.background='';},5000);
+});
+
+// ── BOTÃO E — Teste de envio ao Teams ──
+$('btnTestWebhook').addEventListener('click',async()=>{
+  if(!TEAMS_WEBHOOK_URL){
+    alert('URL do webhook não configurada.\nPreencha TEAMS_WEBHOOK_URL no código.');
+    return;
+  }
+  if(!TEAMS_SECRET_TOKEN){
+    alert('Token do webhook não configurado.\nPreencha TEAMS_SECRET_TOKEN no código.');
+    return;
+  }
+  const turmaLabel=TURMAS_LABEL[currentTurma]||'Turma não definida';
+  const body={
+    token:TEAMS_SECRET_TOKEN,
+    "@type":"MessageCard",
+    "@context":"http://schema.org/extensions",
+    "themeColor":"00B050",
+    "summary":"[TESTE] Conferência de Pauta",
+    "sections":[{
+      "activityTitle":"✅ [TESTE] Conferência de Pauta — "+turmaLabel,
+      "activitySubtitle":"Enviado por: "+(window._userName||'desconhecido')+" em "+new Date().toLocaleString('pt-BR'),
+      "text":"Esta é uma mensagem de teste. O envio de processos sigilosos está funcionando corretamente.",
+      "markdown":true
+    }]
+  };
+  const ind=$('saveIndicator');
+  ind.textContent='Enviando teste ao canal Teams...';ind.classList.add('show');
+  try{
+    const res=await fetch(TEAMS_WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(res.ok||res.status===200){
+      ind.textContent='✓ Teste enviado ao canal Teams com sucesso';
+      ind.style.background='#1a6b3a';
+    } else {
+      ind.textContent='✗ Webhook retornou status '+res.status;
+      ind.style.background='#c0392b';
+    }
+  }catch(e){
+    ind.textContent='✗ Erro ao enviar: '+e.message;
+    ind.style.background='#c0392b';
+  }
+  ind.classList.add('show');setTimeout(()=>{ind.classList.remove('show');ind.style.background='';},5000);
+});
+
+// Handlers modal troca de turma
+$('trocaTurmaSalvarBtn').addEventListener('click',()=>{
+  $('trocaTurmaModal').classList.remove('show');
+  autoSave(true);
+  requestSessionSwitch(null,window._pendingTurmaSwitch);
+  window._pendingTurmaSwitch=null;
+});
+$('trocaTurmaSemSalvarBtn').addEventListener('click',()=>{
+  $('trocaTurmaModal').classList.remove('show');
+  requestSessionSwitch(null,window._pendingTurmaSwitch);
+  window._pendingTurmaSwitch=null;
+});
+$('trocaTurmaCancelarBtn').addEventListener('click',()=>{
+  $('trocaTurmaModal').classList.remove('show');
+  window._pendingTurmaSwitch=null;
+});
+$('helpModal').addEventListener('click',e=>{if(e.target===$('helpModal'))$('helpModal').classList.remove('show');});
+
+async function restoreState(){
+  let restored=false;
+  // Restaurar planilha de cada sala do IndexedDB
+  for(let _rs=0;_rs<NUM_SALAS;_rs++){
+    try{
+      const saved=await loadExcelFromDB(_rs);
+      if(saved&&saved.data){
+        _activeSalaForLoad=_rs;let wb;
+        try{wb=XLSX.read(saved.data,{type:'array',cellDates:true,cellStyles:true})}catch(se){wb=XLSX.read(saved.data,{type:'array',cellDates:true})}
+        workbook=wb;salaWorkbooks[_rs].workbook=wb;loadSheet(0);
+        const dzEl=document.getElementById('dropzone'+_rs);if(dzEl)dzEl.classList.add('loaded');
+        const dzTxt=document.getElementById('dropzoneText'+_rs);if(dzTxt)dzTxt.textContent='📂 '+saved.name;
+        const af=document.getElementById('acervoFile'+_rs);if(af)af.textContent=`(${salaWorkbooks[_rs].dataRows.length.toLocaleString('pt-BR')} processos)`;
+        const btnT=document.getElementById('btnTrocarExcel'+_rs);if(btnT)btnT.style.display='inline-block';const btnX=document.getElementById('btnExcluirExcel'+_rs);if(btnX)btnX.style.display='inline-block';
+        const ui=salaWorkbooks[_rs].allHeaders.findIndex(h=>h.toLowerCase()==='unidade');
+        if(ui>=0&&salaWorkbooks[_rs].dataRows.length>0){
+          const raw=String(salaWorkbooks[_rs].dataRows[0][ui]||'');
+          const m=raw.match(/(?:desembargador(?:a)?\s+federal\s+)(.+)/i);
+          salaWorkbooks[_rs].acervoDesName=m?m[1].trim():raw;
+          const an=document.getElementById('acervoName'+_rs);
+          if(an){an.textContent='Acervo: Des. '+salaWorkbooks[_rs].acervoDesName;an.style.display='inline';}
+          const lr=document.getElementById('labelRelator'+_rs);
+          if(lr)lr.textContent='Lista de processos — '+salaWorkbooks[_rs].acervoDesName;
+          const tabBtn=document.querySelector('.tab-btn[data-sala="'+_rs+'"]');
+          if(tabBtn){const dot=tabBtn.querySelector('.tab-dot');tabBtn.textContent='';
+            let labelName=salaWorkbooks[_rs].acervoDesName;let count=0;
+            for(let _tn=0;_tn<NUM_SALAS;_tn++){if(_tn===_rs)continue;if(salaWorkbooks[_tn].acervoDesName===salaWorkbooks[_rs].acervoDesName)count++;}
+            if(count>0)labelName=salaWorkbooks[_rs].acervoDesName+' ('+(count+1)+')';
+            tabBtn.appendChild(document.createTextNode(labelName));if(dot)tabBtn.appendChild(dot);}
+        }
+        restored=true;
+      }
+    }catch(e){}
+  }
+  if(currentTurma){
+    const idx=getSessionIndex(currentTurma);
+    const lastDate=localStorage.getItem('conf_pauta_lastdate_'+currentTurma)||(idx.length?idx[idx.length-1]:null);
+    renderSessionChips();
+    if(lastDate&&idx.includes(lastDate)){currentDateStr=lastDate;renderSessionChips();loadSessionData(currentTurma,lastDate);restored=true;}
+  }
+  updateExportBtn();updateTextareaLock();updateSessionDateDisplay();
+  if(restored){$('restoreStatus').textContent='\u2713 Sess\u00e3o restaurada automaticamente';setTimeout(()=>{$('restoreStatus').textContent=''},5000)}
+}
+
+// BACKUP
+$('btnBackupExport').addEventListener('click',async()=>{
+  if(!currentTurma){alert('Nenhuma turma ativa.');return;}
+  // Salvar sessão atual antes de exportar
+  autoSave(true);
+  const turmaNome=TURMAS_LABEL[currentTurma]||('Turma '+currentTurma);
+  const index=getSessionIndex(currentTurma);
+  const sessions={};
+  index.forEach(d=>{
+    try{const raw=localStorage.getItem(sessionKey(currentTurma,d));if(raw)sessions[d]=JSON.parse(raw);}catch(e){}
+  });
+  const state={version:'v3',turma:currentTurma,turmaNome,sessionIndex:index,sessions,userName:window._userName||''};
+  // Incluir planilha de cada sala no arquivo de backup
+  state.excels=[];
+  for(let _be=0;_be<NUM_SALAS;_be++){
+    try{
+      const ed=await loadExcelFromDB(_be);
+      if(ed&&ed.data){const bytes=new Uint8Array(ed.data);let bin='';for(let j=0;j<bytes.length;j++)bin+=String.fromCharCode(bytes[j]);state.excels[_be]={base64:btoa(bin),name:ed.name};}else{state.excels[_be]=null;}
+    }catch(e){state.excels[_be]=null;}
+  }
+  const turmaSlug=turmaNome.replace(/\s+/g,'-');
+  const blob=new Blob([JSON.stringify(state)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');
+  a.href=url;a.download=`backup-${turmaSlug}-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();URL.revokeObjectURL(url);
+  const ind=$('saveIndicator');ind.textContent=`✓ Backup da ${turmaNome} salvo (${index.length} data${index.length!==1?'s':''})`;ind.classList.add('show');setTimeout(()=>ind.classList.remove('show'),3500);
+});
+$('btnBackupImport').addEventListener('click',()=>$('backupFileInput').click());
+$('backupFileInput').addEventListener('change',async e=>{
+  const file=e.target.files[0];if(!file)return;
+  try{
+    const text=await file.text();const state=JSON.parse(text);
+    if(state.excels){
+      for(let _bi=0;_bi<NUM_SALAS;_bi++){
+        const ex=state.excels[_bi];if(!ex||!ex.base64)continue;
+        try{
+          const bin=atob(ex.base64);const bytes=new Uint8Array(bin.length);for(let j=0;j<bin.length;j++)bytes[j]=bin.charCodeAt(j);const ab=bytes.buffer;
+          await saveExcelToDB(ab,ex.name||'backup.xlsx',_bi);
+          _activeSalaForLoad=_bi;let wb;
+          try{wb=XLSX.read(ab,{type:'array',cellDates:true,cellStyles:true})}catch(se){wb=XLSX.read(ab,{type:'array',cellDates:true})}
+          workbook=wb;salaWorkbooks[_bi].workbook=wb;loadSheet(0);
+          const dzEl=document.getElementById('dropzone'+_bi);if(dzEl)dzEl.classList.add('loaded');
+          const dzTxt=document.getElementById('dropzoneText'+_bi);if(dzTxt)dzTxt.textContent='📂 '+(ex.name||'backup.xlsx');
+          const af=document.getElementById('acervoFile'+_bi);if(af)af.textContent=`(${salaWorkbooks[_bi].dataRows.length.toLocaleString('pt-BR')} processos)`;
+          const btnT=document.getElementById('btnTrocarExcel'+_bi);if(btnT)btnT.style.display='inline-block';const btnX=document.getElementById('btnExcluirExcel'+_bi);if(btnX)btnX.style.display='inline-block';
+        }catch(e){}
+      }
+    }
+    if(state.version==='v3'&&state.turma&&state.sessions){
+      const t=state.turma;
+      Object.entries(state.sessions).forEach(([d,sd])=>{localStorage.setItem(sessionKey(t,d),JSON.stringify(sd));});
+      if(state.sessionIndex)saveSessionIndex(t,state.sessionIndex);
+      currentTurma=+t;localStorage.setItem(TURMA_KEY,currentTurma);
+      $('turmaBadge').textContent=TURMAS_LABEL[currentTurma]||('Turma '+currentTurma);
+      const idx=state.sessionIndex||[];const lastDate=idx[idx.length-1]||null;
+      renderSessionChips();
+      if(lastDate){currentDateStr=lastDate;loadSessionData(currentTurma,lastDate);renderSessionChips();}
+      const nd=idx.length;
+      $('restoreStatus').textContent=`✓ Backup restaurado — ${TURMAS_LABEL[t]||'Turma '+t}, ${nd} data${nd!==1?'s':''}`;
+    }else if(state.salas){
+      state.salas.forEach((ss,i)=>{if(i>=NUM_SALAS)return;if(ss.salaName)salas[i].salaName=ss.salaName;if(ss.cnjText)q('.cnj-input',i).value=ss.cnjText;if(ss.cnjText&&workbook){filterSala(i);if(ss.rowColors){Object.keys(ss.rowColors).forEach(k=>{if(ss.rowColors[k]!==null)salas[i].rowColors[+k]=ss.rowColors[k]});renderTable(i)}}});
+      $('restoreStatus').textContent='✓ Backup restaurado!';
+    }
+    updateExportBtn();setTimeout(()=>{$('restoreStatus').textContent=''},5000);
+  }catch(err){alert('Erro ao importar backup: '+err.message)}
+});
+
+// NAME MODAL
+const ni=$('nameInput'),ts=$('turmaSelect');
+const savedName=localStorage.getItem(NAME_KEY)||'';if(savedName)ni.value=savedName;
+const savedTurma=localStorage.getItem(TURMA_KEY);if(savedTurma){ts.value=savedTurma;}
+function submitName(){
+  const name=ni.value.trim();const turmaVal=+ts.value;
+  if(name.length<3){$('nameError').textContent='Informe seu nome (m\u00ednimo 3 caracteres)';ni.focus();return}
+  if(!turmaVal){$('nameError').textContent='Selecione a turma';ts.focus();return}
+  $('nameError').textContent='';
+  localStorage.setItem(NAME_KEY,name);localStorage.setItem(TURMA_KEY,turmaVal);
+  currentTurma=turmaVal;
+  $('nameModal').style.display='none';$('appContent').style.display='block';
+  $('userName').textContent=name;window._userName=name;
+  $('turmaBadge').textContent=TURMAS_LABEL[turmaVal]||('Turma '+turmaVal);
+  restoreState();
+}
+$('nameSubmit').addEventListener('click',submitName);
+ni.addEventListener('keydown',e=>{if(e.key==='Enter')submitName()});
+ts.addEventListener('keydown',e=>{if(e.key==='Enter')submitName()});
+ni.focus();ni.select();
+// RESET ALL
+let clearSalaPending=-1;
+$('btnResetAll').addEventListener('click',()=>{$('confirmResetModal').classList.add('show')});
+$('resetCancelBtn').addEventListener('click',()=>{$('confirmResetModal').classList.remove('show')});
+$('confirmResetModal').addEventListener('click',e=>{if(e.target===$('confirmResetModal'))$('confirmResetModal').classList.remove('show')});
+$('resetConfirmBtn').addEventListener('click',async()=>{
+  $('confirmResetModal').classList.remove('show');
+  // Limpar IndexedDB (planilhas de todas as salas)
+  try{const db=await openDB();const tx=db.transaction(DB_STORE,'readwrite');tx.objectStore(DB_STORE).clear();await new Promise(r=>{tx.oncomplete=r})}catch(e){}
+  // Preservar nome, turma e sigilosos já enviados
+  const userName=localStorage.getItem(NAME_KEY);
+  const turma=localStorage.getItem(TURMA_KEY);
+  const sigiloSent=localStorage.getItem(SIGILO_SENT_KEY);
+  // Limpar todo localStorage e restaurar apenas o que deve ser preservado
+  localStorage.clear();
+  if(userName)localStorage.setItem(NAME_KEY,userName);
+  if(turma)localStorage.setItem(TURMA_KEY,turma);
+  if(sigiloSent)localStorage.setItem(SIGILO_SENT_KEY,sigiloSent);
+  location.reload();
+});
+
+// CLEAR SALA confirm
+$('clearSalaCancelBtn').addEventListener('click',()=>{$('confirmClearSalaModal').classList.remove('show');clearSalaPending=-1});
+$('confirmClearSalaModal').addEventListener('click',e=>{if(e.target===$('confirmClearSalaModal')){$('confirmClearSalaModal').classList.remove('show');clearSalaPending=-1}});
+$('clearSalaConfirmBtn').addEventListener('click',()=>{
+  $('confirmClearSalaModal').classList.remove('show');
+  const s=clearSalaPending;clearSalaPending=-1;
+  if(s<0)return;
+  // Limpar Sala zera tudo intencionalmente — inclusive cores manuais
+  const S=salas[s];S.filteredRows=[];S.filteredRowIndices=[];S.rowColors={};S.notFoundList=[];S.colFilters={};
+  q('.cnj-input',s).value='';q('.cnj-count',s).textContent='—';
+  document.querySelector(`.dup-info[data-sala="${s}"]`).innerHTML='';
+  q('.sala-stats',s).innerHTML='';
+  document.querySelector(`.nf-section[data-sala="${s}"]`).style.display='none';
+  document.querySelector(`.ct[data-sala="${s}"]`).classList.remove('show');
+  document.querySelector(`.tw[data-sala="${s}"]`).style.display='none';
+  q('.btn-clear-sala',s).disabled=true;q('.btn-filter',s).disabled=true;
+  updateTabDot(s);updateExportBtn();updateColorCounters(s);autoSave();
+});
+
+window.addEventListener('beforeunload',()=>autoSave(true));
+document.addEventListener('visibilitychange',()=>{if(document.hidden)autoSave(true)});
+</script>
+</body>
+</html>
