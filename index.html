@@ -1331,8 +1331,8 @@ async function enviarSigilososTeams(cnjs,sala){
     }]
   };
   try{
-    const res=await fetch(TEAMS_WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    if(res.ok||res.status===200){
+    await fetch(TEAMS_WEBHOOK_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(true){
       novos.forEach(c=>sent.add(sigiloSentKey(c)));
       saveSigiloSentSet(sent);
       const ind=$('saveIndicator');
@@ -1682,14 +1682,9 @@ $('btnTestWebhook').addEventListener('click',async()=>{
   const ind=$('saveIndicator');
   ind.textContent='Enviando teste ao canal Teams...';ind.classList.add('show');
   try{
-    const res=await fetch(TEAMS_WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    if(res.ok||res.status===200){
-      ind.textContent='✓ Teste enviado ao canal Teams com sucesso';
-      ind.style.background='#1a6b3a';
-    } else {
-      ind.textContent='✗ Webhook retornou status '+res.status;
-      ind.style.background='#c0392b';
-    }
+    await fetch(TEAMS_WEBHOOK_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    ind.textContent='✓ Teste disparado — verifique se chegou no canal Teams';
+    ind.style.background='#1a6b3a';
   }catch(e){
     ind.textContent='✗ Erro ao enviar: '+e.message;
     ind.style.background='#c0392b';
