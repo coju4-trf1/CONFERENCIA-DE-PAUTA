@@ -521,7 +521,7 @@ const TEAMS_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbzDOtc_V4-YSW
 const TEAMS_SECRET_TOKEN = 'coju4webhookconfpauta'; // ← INSIRA O TOKEN DO WEBHOOK TEAMS AQUI
 // ─────────────────────────────────────────────────────────
 // TELEMETRIA — Google Apps Script
-const TELEMETRIA_URL = 'https://script.google.com/macros/s/AKfycbzecArP4q2e5rj13VQE2rFJrJjyl84ce61j2OTIo1g_6iERL5RoH7Mo-Gs7edcQYK7-/exec';
+const TELEMETRIA_URL = 'https://script.google.com/macros/s/AKfycbyXBjC2z6VOZjotD189tWYKcT24uVMzMA6VFJL-BYTVniu5DF02O66QrjRi-ZJdAgVa/exec';
 const TELEMETRIA_SECRET_TOKEN = 'coju4telemetriaconfpauta'; // ← INSIRA O TOKEN DA TELEMETRIA AQUI
 // ─────────────────────────────────────────────────────────
 // ─────────────────────────────────────────────────────────
@@ -1178,7 +1178,7 @@ function runConcluirAnalise(){
       const telKey='conf_pauta_telemetria_sent_'+(currentTurma||'')+'_'+(currentDateStr||'').replace(/[^0-9]/g,'_');
       if(!localStorage.getItem(telKey)){
         localStorage.setItem(telKey,'1');
-        let qtdAnalisados=0,qtdEF=0,qtdMigrados=0,qtdPoloAtivoSemAdv=0,qtdSemCnpj=0;
+        let qtdAnalisados=0,qtdEF=0,qtdMigrados=0,qtdPoloAtivoSemAdv=0,qtdPoloAtivoSemCnpj=0,qtdPoloPassivoSemCnpj=0;
         const listaSigilosos=[];
         const relatoresAtivosNomes=[];
         for(let s=0;s<NUM_SALAS;s++){
@@ -1187,9 +1187,10 @@ function runConcluirAnalise(){
           qtdAnalisados+=S.filteredRows.length+S.notFoundList.length;
           const sw=salaWorkbooks[s];
           if(sw.acervoDesName)relatoresAtivosNomes.push(sw.acervoDesName);
-          const efColIdx=allHeaders.findIndex(h=>/classe.*proc.*origem.*cnj/i.test(h));
+          const efColIdx=sw.allHeaders.findIndex(h=>/classe.*proc.*origem.*cnj/i.test(h));
           const advIdx=sw.advColIdx>=0?sw.advColIdx:-1;
           const cpfAtivoIdx=sw.allHeaders.findIndex(h=>/cpf.*cnpj.*polo\s*ativo/i.test(h));
+          const cpfPassivoIdx=sw.allHeaders.findIndex(h=>/cpf.*cnpj.*polo\s*passivo/i.test(h));
           const sigiloIdx=sw.sigiloColIdx>=0?sw.sigiloColIdx:-1;
           S.filteredRows.forEach(row=>{
             const cl=String(efColIdx>=0?row[efColIdx]||'':'').trim().toLowerCase();
@@ -1198,8 +1199,10 @@ function runConcluirAnalise(){
             if(cnj.startsWith('0'))qtdMigrados++;
             const adv=String(advIdx>=0?row[advIdx]||'':'').trim().toLowerCase();
             if(adv===''||adv==='registro nulo')qtdPoloAtivoSemAdv++;
-            const cpf=String(cpfAtivoIdx>=0?row[cpfAtivoIdx]||'':'').trim().toLowerCase();
-            if(cpf===''||cpf==='registro nulo')qtdSemCnpj++;
+            const cpfAt=String(cpfAtivoIdx>=0?row[cpfAtivoIdx]||'':'').trim().toLowerCase();
+            if(cpfAt===''||cpfAt==='registro nulo')qtdPoloAtivoSemCnpj++;
+            const cpfPas=String(cpfPassivoIdx>=0?row[cpfPassivoIdx]||'':'').trim().toLowerCase();
+            if(cpfPas===''||cpfPas==='registro nulo')qtdPoloPassivoSemCnpj++;
             if(sigiloIdx>=0){const sig=String(row[sigiloIdx]||'').trim().toLowerCase();if(sig&&sig!=='não'&&sig!=='nao'&&sig!=='registro nulo'&&sig!=='n')listaSigilosos.push(cnj);}
           });
         }
@@ -1210,7 +1213,7 @@ function runConcluirAnalise(){
           dataSessao:currentDateStr||'não informada',
           relatores:relatoresAtivosNomes.join(', ')||'não informado',
           qtdAnalisados,qtdEF,qtdMigrados,qtdSigilosos:listaSigilosos.length,
-          qtdPoloAtivoSemAdv,qtdSemCnpj,listaSigilosos
+          qtdPoloAtivoSemAdv,qtdPoloAtivoSemCnpj,qtdPoloPassivoSemCnpj,listaSigilosos
         };
         fetch(TELEMETRIA_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
           .catch(e=>console.warn('Telemetria erro:',e));
@@ -1642,7 +1645,7 @@ $('btnTestTelemetria').addEventListener('click',async()=>{
     turma:TURMAS_LABEL[currentTurma]||'não definida',
     dataSessao:currentDateStr||'não definida',
     mensagem:'Mensagem de teste da Conferência de Pauta — '+new Date().toLocaleString('pt-BR'),
-    qtdAnalisados:0,qtdEF:0,qtdMigrados:0,qtdSigilosos:0,qtdPoloAtivoSemAdv:0,qtdSemCnpj:0,
+    qtdAnalisados:0,qtdEF:0,qtdMigrados:0,qtdSigilosos:0,qtdPoloAtivoSemAdv:0,qtdPoloAtivoSemCnpj:0,qtdPoloPassivoSemCnpj:0,
     relatores:'TESTE',listaSigilosos:[]
   };
   const ind=$('saveIndicator');
