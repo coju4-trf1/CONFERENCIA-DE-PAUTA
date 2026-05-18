@@ -1172,6 +1172,50 @@ function runConcluirAnalise(){
       <b>${totalProcessos} processo(s)</b> analisados em <b>${relatoresAtivos} relator(es)</b> na sessão de <b>${dateLabel}</b> — ${turmaLabel}.<br><br>
       Todos os processos foram devidamente classificados. Você pode prosseguir com a exportação.
     </p>`;
+    concludeOverlay.classList.add('show');
+    // Enviar telemetria somente quando análise 100% concluída e somente uma vez por turma+data
+    if(TELEMETRIA_URL){
+      const telKey='conf_pauta_telemetria_sent_'+(currentTurma||'')+'_'+(currentDateStr||'').replace(/[^0-9]/g,'_');
+      if(!localStorage.getItem(telKey)){
+        localStorage.setItem(telKey,'1');
+        let qtdAnalisados=0,qtdEF=0,qtdMigrados=0,qtdPoloAtivoSemAdv=0,qtdSemCnpj=0;
+        const listaSigilosos=[];
+        const relatoresAtivosNomes=[];
+        for(let s=0;s<NUM_SALAS;s++){
+          const S=salas[s];
+          if(S.filteredRows.length===0&&S.notFoundList.length===0)continue;
+          qtdAnalisados+=S.filteredRows.length+S.notFoundList.length;
+          const sw=salaWorkbooks[s];
+          if(sw.acervoDesName)relatoresAtivosNomes.push(sw.acervoDesName);
+          const efColIdx=allHeaders.findIndex(h=>/classe.*proc.*origem.*cnj/i.test(h));
+          const advIdx=sw.advColIdx>=0?sw.advColIdx:-1;
+          const cpfAtivoIdx=sw.allHeaders.findIndex(h=>/cpf.*cnpj.*polo\s*ativo/i.test(h));
+          const sigiloIdx=sw.sigiloColIdx>=0?sw.sigiloColIdx:-1;
+          S.filteredRows.forEach(row=>{
+            const cl=String(efColIdx>=0?row[efColIdx]||'':'').trim().toLowerCase();
+            if(cl==='execução fiscal'||cl==='execucao fiscal')qtdEF++;
+            const cnj=String(row[sw.cnjColIndex]||'').trim();
+            if(cnj.startsWith('0'))qtdMigrados++;
+            const adv=String(advIdx>=0?row[advIdx]||'':'').trim().toLowerCase();
+            if(adv===''||adv==='registro nulo')qtdPoloAtivoSemAdv++;
+            const cpf=String(cpfAtivoIdx>=0?row[cpfAtivoIdx]||'':'').trim().toLowerCase();
+            if(cpf===''||cpf==='registro nulo')qtdSemCnpj++;
+            if(sigiloIdx>=0){const sig=String(row[sigiloIdx]||'').trim().toLowerCase();if(sig&&sig!=='não'&&sig!=='nao'&&sig!=='registro nulo'&&sig!=='n')listaSigilosos.push(cnj);}
+          });
+        }
+        const payload={
+          token:TELEMETRIA_SECRET_TOKEN,
+          usuario:window._userName||'desconhecido',
+          turma:TURMAS_LABEL[currentTurma]||('Turma '+currentTurma),
+          dataSessao:currentDateStr||'não informada',
+          relatores:relatoresAtivosNomes.join(', ')||'não informado',
+          qtdAnalisados,qtdEF,qtdMigrados,qtdSigilosos:listaSigilosos.length,
+          qtdPoloAtivoSemAdv,qtdSemCnpj,listaSigilosos
+        };
+        fetch(TELEMETRIA_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+          .catch(e=>console.warn('Telemetria erro:',e));
+      }
+    }
   } else {
     icon.textContent='⚠️';
     title.textContent=`Análise incompleta — ${totalPendente} processo(s) pendente(s)`;
@@ -1181,49 +1225,7 @@ function runConcluirAnalise(){
         ${d.lista.slice(0,15).map(p=>`<div style="font-family:'JetBrains Mono',monospace;font-size:.75rem;padding:.15rem 0;border-bottom:1px solid var(--border)">${p}</div>`).join('')}
         ${d.lista.length>15?`<div style="font-size:.72rem;color:var(--text-dim);margin-top:.3rem">...e mais ${d.lista.length-15} processo(s)</div>`:''}
       </div>`).join('');
-  }
-  concludeOverlay.classList.add('show');
-
-  // Enviar telemetria real ao Apps Script
-  if(TELEMETRIA_URL){
-    // Consolidar dados de todas as salas
-    let qtdAnalisados=0,qtdEF=0,qtdMigrados=0,qtdSigilosos=0,qtdPoloAtivoSemAdv=0,qtdSemCnpj=0;
-    const listaSigilosos=[];
-    const relatoresAtivos=[];
-    for(let s=0;s<NUM_SALAS;s++){
-      const S=salas[s];
-      if(S.filteredRows.length===0&&S.notFoundList.length===0)continue;
-      qtdAnalisados+=S.filteredRows.length+S.notFoundList.length;
-      const sw=salaWorkbooks[s];
-      if(sw.acervoDesName)relatoresAtivos.push(sw.acervoDesName);
-      // Contar por características da planilha
-      const efColIdx=allHeaders.findIndex(h=>/classe.*proc.*origem.*cnj/i.test(h));
-      const advIdx=sw.advColIdx>=0?sw.advColIdx:-1;
-      const cpfAtivoIdx=sw.allHeaders.findIndex(h=>/cpf.*cnpj.*polo\s*ativo/i.test(h));
-      const sigiloIdx=sw.sigiloColIdx>=0?sw.sigiloColIdx:-1;
-      S.filteredRows.forEach(row=>{
-        const cl=String(efColIdx>=0?row[efColIdx]||'':'').trim().toLowerCase();
-        if(cl==='execução fiscal'||cl==='execucao fiscal')qtdEF++;
-        const cnj=String(row[sw.cnjColIndex]||'').trim();
-        if(cnj.startsWith('0'))qtdMigrados++;
-        const adv=String(advIdx>=0?row[advIdx]||'':'').trim().toLowerCase();
-        if(adv===''||adv==='registro nulo')qtdPoloAtivoSemAdv++;
-        const cpf=String(cpfAtivoIdx>=0?row[cpfAtivoIdx]||'':'').trim().toLowerCase();
-        if(cpf===''||cpf==='registro nulo')qtdSemCnpj++;
-        if(sigiloIdx>=0){const sig=String(row[sigiloIdx]||'').trim().toLowerCase();if(sig&&sig!=='não'&&sig!=='nao'&&sig!=='registro nulo'&&sig!=='n')listaSigilosos.push(cnj);}
-      });
-    }
-    const payload={
-      token:TELEMETRIA_SECRET_TOKEN,
-      usuario:window._userName||'desconhecido',
-      turma:TURMAS_LABEL[currentTurma]||('Turma '+currentTurma),
-      dataSessao:currentDateStr||'não informada',
-      relatores:relatoresAtivos.join(', ')||'não informado',
-      qtdAnalisados,qtdEF,qtdMigrados,qtdSigilosos:listaSigilosos.length,
-      qtdPoloAtivoSemAdv,qtdSemCnpj,listaSigilosos
-    };
-    fetch(TELEMETRIA_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
-      .catch(e=>console.warn('Telemetria erro:',e));
+    concludeOverlay.classList.add('show');
   }
 }
 
@@ -1397,6 +1399,7 @@ function resetSalasUI(){
     const tw=document.querySelector(`.tw[data-sala="${i}"]`);if(tw)tw.style.display='none';
     const bcs=q('.btn-clear-sala',i);if(bcs)bcs.disabled=true;
     q('.btn-filter',i).disabled=true;
+    updateColorCounters(i);
   }
   activeSala=0;
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',+b.dataset.sala===0));
